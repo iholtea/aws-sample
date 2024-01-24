@@ -1,5 +1,6 @@
 package ionuth.test.aws;
 
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
@@ -13,7 +14,10 @@ public class S3Demo {
     private final S3Client s3Client;
     
     public S3Demo() {
-      s3Client = S3Client.builder().region(Region.US_EAST_1).build();
+      s3Client = S3Client.builder()
+          .region(Region.US_EAST_1)
+          .credentialsProvider(DefaultCredentialsProvider.create())
+          .build();
     }
     
     private void listBuckets() {
