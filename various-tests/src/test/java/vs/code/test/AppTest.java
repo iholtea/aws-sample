@@ -4,6 +4,9 @@
 package vs.code.test;
 
 import org.junit.jupiter.api.Test;
+
+import ionuth.test.others.App;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AppTest {

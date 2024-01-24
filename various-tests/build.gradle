@@ -17,16 +17,20 @@ repositories {
 }
 
 dependencies {
-    // Use JUnit Jupiter for testing.
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+    
+    implementation 'software.amazon.awssdk:s3:2.21.42'    
 
     implementation 'org.apache.commons:commons-lang3:3.13.0'
+
+
+    // Use JUnit Jupiter for testing.
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
 
 }
 
 application {
     // Define the main class for the application.
-    mainClass = 'vs.code.test.App'
+    // mainClass = 'vs.code.test.App'
 }
 
 tasks.named('test') {
