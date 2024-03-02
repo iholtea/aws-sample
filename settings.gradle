@@ -9,3 +9,4 @@
 
 rootProject.name = 'aws-sample'
 include('various-tests')
+include('todos-data')

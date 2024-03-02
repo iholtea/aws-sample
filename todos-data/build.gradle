@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
+dependencies {
+    
+    implementation 'software.amazon.awssdk:s3:2.21.42'    
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
+
+    // Use JUnit Jupiter for testing.
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+
+}
+
+
+tasks.named('test') {
+    // Use JUnit Platform for unit tests.
+    useJUnitPlatform()
+}

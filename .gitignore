@@ -3,6 +3,8 @@
 
 # Ignore IDE specific configuration files
 .vscode
+.project
+.settings
 
 # Ignore build output directories
 build

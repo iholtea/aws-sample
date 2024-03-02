@@ -1,0 +1,221 @@
+https://www.coursera.org/learn/building-modern-java-applications-on-aws
+https://www.coursera.org/learn/building-modern-java-applications-on-aws/home/week/1
+
+
+IAM Roles
+
+A service-linked role is a unique type of IAM role that is linked directly to an AWS service. 
+Service-linked roles are predefined by the service and include all the permissions 
+that the service requires to call other AWS services on your behalf. 
+
+AWSServiceRoleForSupport
+AWSServiceRoleForTrustedAdvisor
+    They are Service-Linked Role
+    q1: why do they appear in my Roles list in AWS console ?
+        I did not create them since they are predefined by AWS, maybe they pop up in that 
+        list when the services to which they are linked are used for the first time ?
+    q2: I might have screwed up by deleting a Cloud9 service linked role ?
+        why did AWS let me delete it if it's predefined by an AWS service :) ?
+
+NOTE
+    I think it would be a good practice to tag anything I create in AWS with 
+    created-by : iholtea so I know what to delete and what might be stuff created by AWS
+
+https://aws.amazon.com/developer/tools/
+    Tools for developing and managing applications on AWS
+
+NOTE
+    it would seem one way to enable an aws service to make use of another aws service
+    is to use Roles. You attach a role to the first service that grants permissions to 
+    access the sencond service. 
+
+ Parameter store
+    to use key-value pairs to keep names of aws resources in case they will change
+    for example names of the s3 buckets used by an application  
+
+ NoSQL
+    in DynamoDB if creating a Books table, we may have Book Title + Author Name as partition key
+    but then we want to search also by author name and by book title
+
+    check JavaBrains Cassandra tutorial here: https://www.youtube.com/watch?v=106jIBE9XSc
+    We might have a BookById table, and BookByAuthor table 
+    Having just book title as partition key is not ideal, as multiple books may have the same title
+    (written by different authors)
+    Note that we may have multiple entries with the same partition key, it is expected
+    so an author name/id can be PK in the BooksByAuthor table because we want to display 
+    all the books written be an author when displaying authord details
+
+    but having book title + author name as partition key , i don't know if we could have 
+    two additional "indexes" both for book title and for author name to search by both  
+
+ Security related :
+
+    Resource policy
+        is attached to a resource like an S3 bucket and specifies what actions are allowed 
+        on that resource
+
+    Identity policy
+        specifies what services/resources that identity can access.
+        ( probably it's not enough for example to attach a role to lambda that it can access S3 buckets
+        if the specific bucket does not have a policy to allow actions to be executed)
+
+    Also, the thing with identity policy is that we may add them only for services in our account.
+    If we need to allow other account to access different resources we need resource policies
+
+    Bucket policies (check https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html)
+
+    Deny access exception some IP address class
+
+    {
+      "Version": "2012-10-17",
+      "Id": "BlockIPAddr",
+      "Statement": [
+        {
+          "Sid": "IPAllow",
+          "Effect": "Deny",
+          "Principal": "*",
+          "Action": "s3:*",
+          "Resource": "arn:aws:s3:::test-usage-iholtea/*",
+          "Condition": {
+            "NotIpAddress": {
+                "aws:SourceIp": "1.3.3.5/32"
+            }        
+          }
+        }
+      ]
+    }
+
+    Create a static website with S3
+
+        step 1: create a bucket with the chosen name , uncheck Block Public Access 
+            leave the rest default and hit Create Bucket
+
+        step 2: 
+            click on the bucket -> properties tab
+            scroll to the bottom the the Static website hosting section and hit Edit   
+            check enable
+            provide the index and error document html file names
+              for example index.html and error.html
+            click on Save changes button
+        
+            At this point if we access the linked provided by AWS for the site like
+            http://test-static-site-iholtea.s3-website-us-east-1.amazonaws.com 
+            we get 403 Forbidden  Code: AccessDenied
+            By default S3 is private and since we did not set any permission to 
+            access the objects from this bucket
+            NOTE - now we are accessing it from the internet, so as an anonymous
+            or un-authenticated user( as opposed when accessing it from a a java client
+            using AWS API and having the Admin credentials set up)
+
+        step 3:
+            add a bucket policy to enable access
+            go to Permission tab in the bucket and edit the Bucket policy
+
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "PublicRead",
+                        "Effect": "Allow",
+                        "Principal": "*",
+                        "Action": "s3:GetObject",
+                        "Resource": "arn:aws:s3:::test-static-site-iholtea/*"
+                    }
+                ]
+            }
+
+API Gateway - there are multiple types
+    Websocket
+        statefull and bi-directional communication. Used for real-time apps like chats.
+    Http 
+        used to proxy back-end resources and are supposed to be simple and fast.
+        supports authentication, can call lambda functions
+        so it takes a request, authorises it and passes to the backend implementation(lambda, other http endpoint)
+    REST
+        similar with Http but has additional functionality.
+        gives control over the request and response, validation, transformation of the data payload,
+        may provide mocked responses.
+
+Create a new API.
+    go to API Gateway, choose REST API and click Build
+    select New API type
+    give it a name: todos-manual 
+
+Create a Resource - this is like and endpoint to which we then can add methods.
+    click Create Resource 
+    give it a name like hello. The path will hava the same name.
+    now we have the hello resource and by default it has the http OPTIONS method
+
+Create a Method for a Resource
+    
+    select type - GET/POST/DELETE etc
+    select integration type - Lambda, Mock, Http endpoint     
+    
+    after creation we can control what happens during the request/response flow
+    Method Request settings 
+        apply authorization, validate data payload
+    Integration request 
+        specify integration type like Mock, Lambda
+        apply data transformation on payload if necessary
+    Integration response 
+        this is an http response encapsulating the backend response    
+        so we cand configure how backed response maps to http response
+        we can apply data transformation
+    Method response settings
+        can apply validations on the response data
+        specify how to send different http status codes and associated headers/payload 
+
+    Test tab where we could add query strings and headers and test the current method
+
+    Models: 
+        validate request/responses with models
+        defines the structure of the request
+        are created using JSON schemas
+        if the request payload does not match the schema API gateway will return a 
+            400 error http response. So no need to call lamba/backend for this taskß 
+    Mappings: transform request/responses with mappings 
+        might be needed when backend expects the data in a format different
+        from the one the client sends.  
+        mapping are written in VTL - velocity template language 
+
+To create an integration response for a Mock type method
+    Click Edit on the response. There is a default one for 200 status code
+    Expand Mapping templates and add the json body we want to return as mock
+    Ex for a HelloWorld:
+    {
+      "message": "hello, world!"
+    }
+
+    Use VTL instead of just plain JSON to create a dynamic response 
+    depending on query string parameters
+    see https://docs.aws.amazon.com/apigateway/latest/developerguide/models-mappings.html
+    
+    #set($name=$input.params('name'))
+    #set($lang=$input.params('lang'))
+    #if( $lang == 'ro' )
+      {
+        "message": "Salut, $name"
+      }
+    #elseif( $lang == 'es' )
+      {
+        "message": "Hola, $name"
+      }
+    #else
+      {
+        "message": "Hello, $name"
+      }
+    #end    
+
+See https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/java_s3_code_examples.html#s3_GetObject_java_topic
+Section 
+
+
+https://www.reddit.com/r/vscode/comments/su4ebg/how_to_set_tab_spacing_per_file_type_for_all/
+section Get started with buckets and objects
+
+
+
+
+
+
+        

@@ -22,6 +22,8 @@ dependencies {
 
     implementation 'org.apache.commons:commons-lang3:3.13.0'
 
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
+
 
     // Use JUnit Jupiter for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
