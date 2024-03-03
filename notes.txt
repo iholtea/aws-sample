@@ -213,6 +213,12 @@ Section
 https://www.reddit.com/r/vscode/comments/su4ebg/how_to_set_tab_spacing_per_file_type_for_all/
 section Get started with buckets and objects
 
+REST Spring Boot and CORS : https://www.baeldung.com/spring-cors
+
+!!!! Some idea
+	use the AWS parameter store to indicate if the TODO-s app storage should be JSON file on S3 or Dynamo DB
+	use some factories inside the lambdas to determine that :)
+
 
 
 

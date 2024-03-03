@@ -1,4 +1,4 @@
-package ionuth.todos;
+package ionuth.todos.app;
 
 import java.util.Arrays;
 import java.util.List;
