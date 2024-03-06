@@ -1,5 +1,11 @@
+https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/home.html
+
 https://www.coursera.org/learn/building-modern-java-applications-on-aws
 https://www.coursera.org/learn/building-modern-java-applications-on-aws/home/week/1
+
+https://www.coursera.org/learn/dynamodb-nosql-database-driven-apps
+https://www.coursera.org/learn/dynamodb-nosql-database-driven-apps/home/week/1
+
 
 
 IAM Roles
