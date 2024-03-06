@@ -18,7 +18,8 @@ repositories {
 
 dependencies {
     
-    implementation 'software.amazon.awssdk:s3:2.21.42'    
+    implementation 'software.amazon.awssdk:s3:2.21.42'
+    implementation 'software.amazon.awssdk:dynamodb:2.21.42'    
 
     implementation 'org.apache.commons:commons-lang3:3.13.0'
 
