@@ -87,7 +87,7 @@ public class TodoRepositoryFileLocal implements TodoRepository {
     @Override
     public TodoList getListById(String id) {
         List<TodoList> todos = getAllLists();
-        Optional<TodoList> opt = todos.stream().filter(todo -> todo.uuid().equals(id)).findAny();
+        Optional<TodoList> opt = todos.stream().filter(todo -> todo.getUuid().equals(id)).findAny();
         if( opt.isPresent() ) {
             return opt.get();
         } else {
@@ -104,8 +104,8 @@ public class TodoRepositoryFileLocal implements TodoRepository {
 
     private TodoItem getItemById(List<TodoList> todos, String id) {
         for( TodoList todoList : todos ) {
-          for( TodoItem item : todoList.items() ) {
-              if( item.uuid().equals(id) ) {
+          for( TodoItem item : todoList.getItems() ) {
+              if( item.getUuid().equals(id) ) {
                   return item;
               }
           }
@@ -116,7 +116,7 @@ public class TodoRepositoryFileLocal implements TodoRepository {
 
     public void updateItem(TodoItem item) {
         List<TodoList> todos = getAllLists();
-        TodoItem foundItem = getItemById(todos, item.uuid());
+        TodoItem foundItem = getItemById(todos, item.getUuid());
         
     }
 

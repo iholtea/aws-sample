@@ -1,18 +1,21 @@
 [
-  {
-    "uuid":"59cb3548-33e8-48e5-beb7-8ecdec7538c8",
-    "title":"TODO next week",
-    "items":[
-      {"uuid":"24eacc3b-6f23-414e-850a-181dee62cbc7","text":"Plateste internet","description":"","done":false},
-      {"uuid":"db6e1672-285f-44f7-9e53-b63e07514a14","text":"Programare masina","description":"","done":false}
-    ]
-  },
-  {
-    "uuid":"993c94c4-40dc-45dd-b222-bbfd2041fa0e",
-    "title":"TODO luna viitoare",
-    "items":[
-      {"uuid":"ec6b1e8d-4062-4053-9e87-9b2d3aa3daba","text":"Programeaza revizie masina","description":"","done":false},
-      {"uuid":"d73d141b-ae94-4beb-82f7-272f51ed47c5","text":"Cumpara vigneta","description":"","done":false}
-    ]
-  }
+	{
+		"uuid":"uuid-list-01",
+		"title":"Norway road trip",
+		"items":[
+			{"uuid":"uuid-item-01-01","text":"Buy travel insurance","description":"","done":false},
+			{"uuid":"uuid-item-01-02","text":"Create online account for Norway road tax","description":"","done":true},
+			{"uuid":"uuid-item-01-03","text":"Buy travel insurance","description":"","done":false}
+		]
+	},
+	{
+		"uuid":"uuid-list-02",
+		"title":"Supermarket shopping",
+		"items":[
+			{"uuid":"uuid-item-02-01","text":"Oranges 2kg","description":"","done":false},
+			{"uuid":"uuid-item-02-02","text":"Pink lady apples 2 packs","description":"","done":true},
+			{"uuid":"uuid-item-02-03","text":"Potatoes 3kg","description":"","done":true},
+			{"uuid":"uuid-item-02-04","text":"Orange juice 2 boxes","description":"","done":false}
+		]
+	}
 ]
