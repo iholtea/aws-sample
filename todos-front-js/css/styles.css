@@ -1,0 +1,11 @@
+.item-div {
+  margin-bottom: 5px;
+}
+
+.item-text {
+  margin-left: 5px;
+}
+
+.item-line-through {
+  text-decoration-line: line-through;
+}
