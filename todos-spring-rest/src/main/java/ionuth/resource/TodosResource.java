@@ -9,11 +9,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import ionuth.todos.model.TodoList;
 import ionuth.todos.repo.TodoRepository;
+import ionuth.util.SecurityHelper;
 
 @RestController
 public class TodosResource {
 	
 	private final TodoRepository todoRepo;
+	private final String userEmail = SecurityHelper.getUserEmail();
 	
 	@Autowired
 	public TodosResource(TodoRepository todoRepo) {
@@ -22,12 +24,12 @@ public class TodosResource {
 	
 	@GetMapping("/todos")
 	public List<TodoList> getAllTodoLists() {
-		return todoRepo.getAllLists();
+		return todoRepo.getListsByUserEmail(userEmail);
 	}
 	
 	@GetMapping("/todos/{uuid}")
 	public TodoList getTodoListById(@PathVariable("uuid") String uuid) {
-		return todoRepo.getListById(uuid);
+		return todoRepo.getListById(uuid, userEmail);
 	}
 	
 }

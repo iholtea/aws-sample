@@ -132,6 +132,80 @@ public class DynamoDbDemo {
 		
 	}
 	
+	public void addTodoItems02() {
+		
+		List<WriteRequest> allWriteRequests = new ArrayList<>();
+		
+		var item_02_01 = new TodoItemRec(
+				"uuid-list-02", "uuid-item-02-01", "Supermarket shopping",
+				"Oranges 2kg", false, "");
+		allWriteRequests.add(item2WriteRequest(item_02_01));
+		
+		var item_02_02 = new TodoItemRec(
+				"uuid-list-02", "uuid-item-02-02", "Supermarket shopping",
+				"Pink lady apples 2 packs", true, "");
+		allWriteRequests.add(item2WriteRequest(item_02_02));
+		
+		var item_02_03 = new TodoItemRec(
+				"uuid-list-02", "uuid-item-02-03", "Supermarket shopping",
+				"Potatoes 3kg", true, "");
+		allWriteRequests.add(item2WriteRequest(item_02_03));
+		
+		var item_02_04 = new TodoItemRec(
+				"uuid-list-02", "uuid-item-02-04", "Supermarket shopping",
+				"Orange juice 2 boxes", false, "");
+		allWriteRequests.add(item2WriteRequest(item_02_04));
+		
+		try {
+			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
+					.requestItems( Map.of(ITEM_TABLE_NAME, allWriteRequests) )
+					.build();
+			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
+			System.out.println("Batch Write response: " + batchResponse);
+			
+		} catch(DynamoDbException ex) {
+			System.err.println(ex);
+		}
+		
+	}
+	
+	public void addTodoItems03() {
+		
+		List<WriteRequest> allWriteRequests = new ArrayList<>();
+		
+		var item_03_01 = new TodoItemRec(
+				"uuid-list-03", "uuid-item-03-01", "Week 04-10 march",
+				"Robin and lorem ipsum dolor sit amet", false, "");
+		allWriteRequests.add(item2WriteRequest(item_03_01));
+		
+		var item_03_02 = new TodoItemRec(
+				"uuid-list-03", "uuid-item-03-02", "Week 04-10 march",
+				"Lorem ipsum dolor sit amet is back", true, "");
+		allWriteRequests.add(item2WriteRequest(item_03_02));
+		
+		var item_03_03 = new TodoItemRec(
+				"uuid-list-03", "uuid-item-03-03", "Week 04-10 march",
+				"Lorem ipsum dolor sit amet in vacation", true, "");
+		allWriteRequests.add(item2WriteRequest(item_03_03));
+		
+		var item_03_04 = new TodoItemRec(
+				"uuid-list-03", "uuid-item-03-04", "Week 04-10 march",
+				"Superman versus lorem ipsum dolor sit amet", false, "");
+		allWriteRequests.add(item2WriteRequest(item_03_04));
+		
+		try {
+			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
+					.requestItems( Map.of(ITEM_TABLE_NAME, allWriteRequests) )
+					.build();
+			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
+			System.out.println("Batch Write response: " + batchResponse);
+			
+		} catch(DynamoDbException ex) {
+			System.err.println(ex);
+		}
+		
+	}
+	
 	public void getTodosByUser(String userEmail) {
 		
 		Map<String, AttributeValue> attrValues = Map.of(
@@ -159,6 +233,28 @@ public class DynamoDbDemo {
 		
 	}
 	
+	public void getTodoItems(String listUuid) {
+		
+		QueryRequest queryReq = QueryRequest.builder()
+				.tableName(ITEM_TABLE_NAME)
+				.keyConditionExpression("ListUuid = :ListUuid")
+				.expressionAttributeValues( Map.of(
+						":ListUuid", AttributeValue.fromS(listUuid) ))
+				.build();
+		
+		try {
+			QueryResponse response = dynamoClient.query(queryReq);
+			System.out.println("");
+			System.out.println("Found: " + response.count()  + " TODOs for List: " + listUuid);
+			
+			List<Map<String, AttributeValue>> items = response.items();
+			items.forEach( System.out::println );
+			
+		} catch(DynamoDbException ex) {
+			System.err.println(ex);
+		}
+	}
+	
 	public void closeConnection() {
 		dynamoClient.close();
 	}
@@ -173,8 +269,13 @@ public class DynamoDbDemo {
 		
 		//dynamoDemo.getTodosByUser("holteai@yahoo.com");
 		
-		dynamoDemo.addTodoItems01();
+		//dynamoDemo.addTodoItems01();
+		//dynamoDemo.addTodoItems02();
+		//dynamoDemo.addTodoItems03();
 		
+		dynamoDemo.getTodoItems("uuid-list-02");
+		System.out.println("");
+		dynamoDemo.getTodoItems("uuid-list-03");
 		
 		dynamoDemo.closeConnection();
 				

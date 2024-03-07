@@ -9,7 +9,9 @@ repositories {
 
 dependencies {
     
-    implementation 'software.amazon.awssdk:s3:2.21.42'    
+    implementation 'software.amazon.awssdk:s3:2.21.42'
+    implementation 'software.amazon.awssdk:dynamodb:2.21.42'
+        
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
 
     // Use JUnit Jupiter for testing.

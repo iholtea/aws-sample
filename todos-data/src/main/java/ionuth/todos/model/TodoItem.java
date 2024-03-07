@@ -1,19 +1,10 @@
 package ionuth.todos.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class TodoItem {
     
-	@JsonProperty("uuid")
-    String uuid; 
-    
-    @JsonProperty("text")
+	String uuid; 
     String text; 
-    
-    @JsonProperty("description")
-    String description = "";
-    
-    @JsonProperty("done")
+    String extraInfo;
     boolean done = false;
     
     public TodoItem() {}
@@ -39,12 +30,12 @@ public class TodoItem {
 		this.text = text;
 	}
 
-	public String getDescription() {
-		return description;
+	public String getExtraInfo() {
+		return extraInfo;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	public void setExtraInfo(String extraInfo) {
+		this.extraInfo = extraInfo;
 	}
 
 	public boolean isDone() {
@@ -57,10 +48,8 @@ public class TodoItem {
 
 	@Override
 	public String toString() {
-		return "TodoItem [uuid=" + uuid + ", text=" + text + ", description=" + description + ", done=" + done + "]";
+		return "TodoItem [uuid=" + uuid + ", text=" + text + ", done=" + done + "]";
 	}
-    
-	
     
 
 }

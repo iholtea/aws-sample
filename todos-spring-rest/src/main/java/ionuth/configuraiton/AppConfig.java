@@ -6,7 +6,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import ionuth.todos.repo.TodoRepository;
-import ionuth.todos.repo.impl.file.local.TodoRepositoryFileLocal;
+import ionuth.todos.repo.impl.dynamodb.TodoRepositoryDynamodb;
 
 @Configuration
 public class AppConfig {
@@ -25,7 +25,7 @@ public class AppConfig {
 	
 	@Bean
 	public TodoRepository todoRepository() {
-		return new TodoRepositoryFileLocal();
+		return new TodoRepositoryDynamodb();
 	}
 	
 }

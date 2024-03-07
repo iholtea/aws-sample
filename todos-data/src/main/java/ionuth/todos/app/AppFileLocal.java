@@ -53,7 +53,7 @@ public class AppFileLocal {
 
     private static void findTodoList() {
         TodoRepository todoRepo = new TodoRepositoryFileLocal();
-        TodoList todoList = todoRepo.getListById("uuid-list-02");
+        TodoList todoList = todoRepo.getListById("uuid-list-02","");
         System.out.println("");
         System.out.println(todoList);
         System.out.println("");

@@ -57,8 +57,7 @@ public class TodoRepositoryFileLocal implements TodoRepository {
         
     } 
 
-    @Override
-    public List<TodoList> getAllLists() {
+    private List<TodoList> getAllLists() {
         try {  
             byte[] buff = Files.readAllBytes( dataFile.toPath() );
             if(buff.length==0) {
@@ -70,6 +69,12 @@ public class TodoRepositoryFileLocal implements TodoRepository {
         }
         return Collections.<TodoList>emptyList();
     }
+    
+    @Override
+	public List<TodoList> getListsByUserEmail(String userEmail) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
     @Override
     public void createList(TodoList todoList) {
@@ -85,7 +90,7 @@ public class TodoRepositoryFileLocal implements TodoRepository {
     }
 
     @Override
-    public TodoList getListById(String id) {
+    public TodoList getListById(String id, String userEmail) {
         List<TodoList> todos = getAllLists();
         Optional<TodoList> opt = todos.stream().filter(todo -> todo.getUuid().equals(id)).findAny();
         if( opt.isPresent() ) {
@@ -127,5 +132,6 @@ public class TodoRepositoryFileLocal implements TodoRepository {
     protected List<TodoList> deserialize(byte[] buff) throws IOException {
         return objectMapper.readValue(buff, new TypeReference<List<TodoList>>(){});
     }
+
 
 }

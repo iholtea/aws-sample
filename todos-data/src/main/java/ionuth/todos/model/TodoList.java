@@ -3,17 +3,15 @@ package ionuth.todos.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class TodoList {
     
-	@JsonProperty("uuid")
-    String uuid;
-    
-    @JsonProperty("title")
-    String title;
-    
-    @JsonProperty("items")
+	private String uuid;
+	private String title;
+    private String userEmail;
+	private String creationDate;
+	private String lastUpdate;
+	private String extraInfo;
+	
     List<TodoItem> items = new ArrayList<TodoItem>();
     
     public TodoList() {}
@@ -42,6 +40,42 @@ public class TodoList {
     public List<TodoItem> getItems() {
     	return items;
     }
+    
+    public void setItems(List<TodoItem> items) {
+    	this.items = items;
+    }
+    
+	public String getUserEmail() {
+		return userEmail;
+	}
+
+	public void setUserEmail(String userEmail) {
+		this.userEmail = userEmail;
+	}
+	
+	public String getCreationDate() {
+		return creationDate;
+	}
+
+	public void setCreationDate(String creationDate) {
+		this.creationDate = creationDate;
+	}
+
+	public String getLastUpdate() {
+		return lastUpdate;
+	}
+
+	public void setLastUpdate(String lastUpdate) {
+		this.lastUpdate = lastUpdate;
+	}
+	
+	public String getExtraInfo() {
+		return extraInfo;
+	}
+
+	public void setExtraInfo(String extraInfo) {
+		this.extraInfo = extraInfo;
+	}
 
 	@Override
 	public String toString() {
