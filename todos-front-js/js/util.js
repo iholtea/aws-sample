@@ -1,7 +1,6 @@
 const baseUrl = 'http://localhost:8080/todos';
-let todos;
 
-function  getAllLists(callback) {
+function  fetchAllLists(callback) {
   const xhr = new XMLHttpRequest();
   xhr.open('GET', baseUrl, true);
   xhr.onload = function() {
@@ -52,34 +51,35 @@ function getCustomersCallback(err,data) {
 }
 */     
 
-function getAllListsCallback(err, data) {
+function fetchAllListsCallback(err, data) {
   if(!err) {
-    console.log(data);
-    todos = JSON.parse(data);
-    displayAllLists();
+    const todos = JSON.parse(data);
+    displayAllLists(todos);
     bindListsDisplayActions();
   } else {
     console.log('Error calling backed service');
   }
 }
 
-function displayAllLists() {
+function displayAllLists(todos) {
   const todosContainer = document.getElementById('all-lists-container');
   const ul = document.createElement('ul');
   
   todos.forEach( (todoList, todoListIdx) => {
     
     // compute how many items are done
+    /*
     const doneNr = todoList.items.reduce( (result, item) => {
       return item.done ? result+1 : result;
     }, 0);
+    */
     
     const li = document.createElement('li');
     const liLink = document.createElement('a');
-    liLink.id = `todo-list-${todoListIdx}`;
+    liLink.id = `todo:list:${todoList.uuid}`;
     liLink.href = '#';
     liLink.className = 'todo-list-display';
-    liLink.innerHTML = `${todoList.title} ${doneNr}/${todoList.items.length}`;
+    liLink.innerHTML = `${todoList.title}`;
     li.appendChild(liLink);
     
     ul.appendChild(li);
@@ -89,19 +89,54 @@ function displayAllLists() {
 
 function bindListsDisplayActions() {
   document.querySelectorAll('.todo-list-display').forEach( elem => {
-    elem.addEventListener('click', displayList);
+    elem.addEventListener('click', processDisplayListEvent);
   });
 }
 
-function displayList(event) {
+function processDisplayListEvent(event) {
   
-  // get the index of the TodoList that was clicked(selected)
+  // get the uuid of the TodoList that was clicked(selected)
   let targetElem = event.target;
   while( !(targetElem.nodeName.toUpperCase() === 'A') ) {
     targetElem = targetElem.parentElement;
   }
-  const todoListIdx = targetElem.id.split('-')[2];
-  const todo = todos[todoListIdx];
+  const todoListUuid = targetElem.id.split(':')[2];
+  fetchListById(todoListUuid, displayListCallback);
+  
+}
+
+function fetchListById(uuid, callback) {
+  const listUrl = `${baseUrl}/${uuid}`;
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', listUrl, true);
+  xhr.onload = function() {
+    if(xhr.status === 200) {
+      // TODO - responseText should not be empty
+      // I get empty when an exception happens on the the server side
+      // this is the default stuff Jersey does probably.
+      // should handle it and send some kind of error message
+      callback(null, xhr.responseText);
+    } else {
+        callback('ERR_LOAD', xhr.status);
+    }
+  }
+  xhr.onerror = function() {
+      callback( 'ERR_OTHER', null );
+  }
+  xhr.send();
+}
+
+function displayListCallback(err, data) {
+  if(!err) {
+    const todo = JSON.parse(data);
+    displayList(todo);
+    bindListsDisplayActions();
+  } else {
+    console.log('Error calling backed service');
+  }  
+}
+
+function displayList(todo) {
   
   const mainContainer = document.getElementById('main-container');
   mainContainer.innerHTML = '';
@@ -144,6 +179,5 @@ function displayList(event) {
 
 }
 
-bindListsDisplayActions();
 
-getAllLists( getAllListsCallback );
+fetchAllLists( fetchAllListsCallback );

@@ -1,12 +1,26 @@
 https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/home.html
 
+https://docs.aws.amazon.com/lambda/latest/dg/welcome.html
+https://docs.aws.amazon.com/serverless/latest/devguide/serverless-building-apps.html
+
+https://www.srvrlss.io/blog/Amazon-Lambda-docker/
+
 https://www.coursera.org/learn/building-modern-java-applications-on-aws
 https://www.coursera.org/learn/building-modern-java-applications-on-aws/home/week/1
 
 https://www.coursera.org/learn/dynamodb-nosql-database-driven-apps
 https://www.coursera.org/learn/dynamodb-nosql-database-driven-apps/home/week/1
 
+https://bobbyhadz.com/blog/aws-list-all-resources
+Also another good place to start is the billing console
 
+aws lambda invoke --function-name FirstLambda \ 
+--cli-binary-format raw-in-base64-out \ 
+--payload file://first-lambda-test-02.json out.json
+
+!! See how to create a nice readme.md in github
+you can upload images into an img folder and then use them from the readme
+https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/javav2/usecases/creating_lambda_apigateway/Readme.md
 
 IAM Roles
 
@@ -224,7 +238,136 @@ REST Spring Boot and CORS : https://www.baeldung.com/spring-cors
 !!!! Some idea
 	use the AWS parameter store to indicate if the TODO-s app storage should be JSON file on S3 or Dynamo DB
 	use some factories inside the lambdas to determine that :)
+	
+To create an API Gateway resource with Path Parameters :
+	1.  create the "main" resource, for example todos
+	2.	select the todos resource and click create resource - this will enable to create a sub-resource
+		in the name of the resource provide the path parameter ex: {todoId}
 
+X-Ray vs Cloud Watch as observability mechanisms.
+	
+	CloudWatch is a common place where we can see the logs of different AWS resources.
+	
+	For example for a Lambda Function we can do logging using 
+	LambdaLogger logger = context.getLogger();
+	logger.log("some message")
+	(System.out.println may or may not have the same outcome)
+	
+	Since multiple instances of a lambda function may run at the same time, having 
+	a unique log file to check would not be a trivial task.
+	
+	So AWS provides the CloudWatch. When we to a LabdaLogger.log() in fact we are doing
+	a call to some AWS API which will write to CloudWatch logs
+	
+	CloudWatch has Log Groups - so for a MyLambda lambda function there will be a group
+	Log Stream - each instance of the MyLambda function will be a different entry/file in the group.
+	
+	Note that for example for Lambda Function it's not necessary for us to create a log group.
+	AWS seems to do it automatically the first time the function runs.
+	
+	  
+		
+Lambda-s and permissions.
+	
+	Execution role: this specifies what services your lambda can access	
+		for example - access DynamoDB, S3, write logs to CloudWatch, add tracing to X-Ray
+		
+		When creating a LambdaFunction from the Web UI if we do not specify an IAM role 
+		as execution role, AWS will create one automatically. It has CloudWatch permissions:
+		FirstLambda-role-4vl4e1cp has one policy
+			AWSLambdaBasicExecutionRole-6333557d-55de-40b2-9cbd-f6ae76b76339
+			{
+			    "Version": "2012-10-17",
+			    "Statement": [
+			        {
+			            "Effect": "Allow",
+			            "Action": "logs:CreateLogGroup",
+			            "Resource": "arn:aws:logs:us-east-1:285469546962:*"
+			        },
+			        {
+			            "Effect": "Allow",
+			            "Action": [
+			                "logs:CreateLogStream",
+			                "logs:PutLogEvents"
+			            ],
+			            "Resource": [
+			                "arn:aws:logs:us-east-1:285469546962:log-group:/aws/lambda/FirstLambda:*"
+			            ]
+			        }
+			    ]
+			}
+		
+		We should probably create a specific Role with the needed permission like
+		CloudWatch, DynamoDb access. We should be able to select those from the 
+		available Policies provided by AWS 			
+		
+	
+	Resource based policy: this specifies who can access this resource
+		for example - for a certain lambda function to be invoked by an API Gateway
+		endpoint a policy has to be added to the lambda to permit this.
+		
+		Note that when binding a Lambda Function to an API Gateway resource/method
+		using Web UI , AWS will automatically create the necessary IAM policies for
+		the lambda to be called.
+		
+		For a /todo GET request it creates:
+		{
+		  "ArnLike": {
+		    "AWS:SourceArn": "arn:aws:execute-api:us-east-1:285469546962:r4cwbi98f9/*/GET/todos"
+		  }
+		} 	
+		
+		For a /todo/{todoID} so different path, it creates:					
+		{
+		  "ArnLike": {
+		    "AWS:SourceArn": "arn:aws:execute-api:us-east-1:285469546962:r4cwbi98f9/*/GET/todos/*"
+		  }
+		}
+		
+		Q:  note that above r4cwbi98f9 is the id of the API Gateway 
+			could these be re-united under a single policy to allow all request from
+			that specific API Gateway, so all http methods like GET, POST, DELETE, etc
+			and all paths ? Although we do not have so many :) 
+			
+		
+////////////////
+
+Create all TODOs related resources for the Web UI version using Manual-Todo prefix
+Create all TODOs related resource for the AWS SDK provisioning using SDK-TODO prefix
+use iholtea suffix where global unique names are required, like S3 buckets for example
+
+-   Created an API Gateway of type REST API with name manual-todo
+
+-   Created a resource /footer with response integration type as mock
+	in order to be used to display some custom info as the footer of the page.
+	Gets 2 query string parameters - lang( for languange) and company ( for company name )
+
+-   Deploy the API and link it to a stage
+	
+	Although without a stage it has a public access link like
+	https://95k6wo08hg.execute-api.us-east-1.amazonaws.com
+	it cannot be accessed outside AWS console, it will display an Forbidden message
+	
+	So we need a stage - call it test
+	It seems we cannot create a stage without a deployment(? to be confirmed)
+	So hit deploy and select *New Stage*, give it a stage name: test
+	
+	This provides the Invoke URL: https://95k6wo08hg.execute-api.us-east-1.amazonaws.com/test
+	Invoke with params: https://95k6wo08hg.execute-api.us-east-1.amazonaws.com/test/footer?lang=ro&company=Apple
+	
+	We may also set throttling parameters, logs and tracing, etc 
+	
+-   Create IAM role for execution of lambda
+	( specifies what service a lambda function can access )	
+	
+	Name: Manual-Todo-Lambda-Role
+	Attached policies:
+		CloudWatchLogsFullAccess
+		AmazonDynamoDBFullAccess
+		
+	
+
+		
 
 
 

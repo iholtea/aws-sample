@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.11.4'
+    
+    // Use JUnit Jupiter for testing.
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+
+}
+
+/*
+ * produces a deployment package in the build/distributions
+ * into('lib') statement: the jar task assembles a jar archive containing 
+ * your classes into a folder named lib.
+ * configurations.runtimeClassPath task copies dependency libraries 
+ * from the build's classpath into the same lib folder.
+ */
+task distZip(type: Zip) {
+    into('lib') {
+        from(jar)
+        from(configurations.runtimeClasspath)
+    }
+}
+
+tasks.named('test') {
+    // Use JUnit Platform for unit tests.
+    useJUnitPlatform()
+}
