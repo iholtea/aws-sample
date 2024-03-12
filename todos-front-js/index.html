@@ -30,10 +30,48 @@
       <h4>TODO lists</h4>
       <div id="all-lists-container">
       </div>
+      <div>
+        <button id="btn-new-list" type="button" class="btn btn-primary btn-new-list">New TODO list</button>
+      </div>
     </div>
 
     <div class="col-md-8" id="main-container">
-      <h4>Click on a TODO list to display contents</h4>
+      <h5>Click on a TODO list to display contents</h5>
+      <h5>or create a new one</h5>
+      
+      
+      <form>
+        
+        <div class="row mb-3">
+          <h5>Create new TODO list</h5>
+        </div>  
+
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label">Title:</label>
+          <div class="col-sm-8">
+            <input type="text" class="form-control">
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label">Items:</label>
+          <div class="col-sm-8">
+            <input type="text" class="form-control">
+            <input type="text" class="form-control">
+            <input type="text" class="form-control">
+            <input type="text" class="form-control">
+            <input type="text" class="form-control">
+            <input type="text" class="form-control">
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div>
+            <button id="btn-add-list" type="button" class="btn btn-primary">Submit</button>
+          </div>  
+        </div>
+          
+
+      </form>
+
     </div>
 
   </div>
@@ -46,7 +84,8 @@
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
     crossorigin="anonymous"></script>
 
-<script src="js/util.js"></script>       
+<script type="module" src="js/todos-main.js"></script>
+
 
 </body>
 </html>

@@ -9,3 +9,11 @@
 .item-line-through {
   text-decoration-line: line-through;
 }
+
+.btn-new-list {
+  margin-top: 20px;  
+}
+
+.item-input {
+  margin-top: 10px;
+}

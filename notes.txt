@@ -336,11 +336,14 @@ Create all TODOs related resources for the Web UI version using Manual-Todo pref
 Create all TODOs related resource for the AWS SDK provisioning using SDK-TODO prefix
 use iholtea suffix where global unique names are required, like S3 buckets for example
 
--   Created an API Gateway of type REST API with name manual-todo
+-   Create an API Gateway of type REST API with name manual-todo
 
--   Created a resource /footer with response integration type as mock
+-   Creat a resource /footer , check enable CORS. 
+	This will automatically add the OPTIONS Http method. 
+	Choose Mock as integration type
+	Provide response integration type as mock
 	in order to be used to display some custom info as the footer of the page.
-	Gets 2 query string parameters - lang( for languange) and company ( for company name )
+	Gets 2 query string parameters - lang( for language) and company ( for company name )
 
 -   Deploy the API and link it to a stage
 	
@@ -365,6 +368,91 @@ use iholtea suffix where global unique names are required, like S3 buckets for e
 		CloudWatchLogsFullAccess
 		AmazonDynamoDBFullAccess
 		
+-	Create LambdaFunction with name ManualTodoLambda
+	choose as execution role the one created above instead of letting the UI create a new one.
+	
+-	Go to the manual-todo API Gateway and create the /todos and /todos/{todoId} resources
+	check enable CORS for both
+	To create the sub-resource with path parameter /todos/{todoId} hit create a resource
+	after selecting the /todos resource - this will create it as a "childe" resource
+	provide {todoId} as name
+	
+	Check the Lambda proxy integration
+	Choose lambda function as integration type and select the ManualTodoLamba
+	from the drop-down. It will appear by its ARN, since we did not publish the Lambda
+	Lambda-s can be published, they may have multiple versions.
+	We can create ALIAS-es to point to some version( specific one or $LATEST)
+	In order to support multiple environments like TEST, PROD, etc
+	
+	Since we are using just one environment, it's not mandatory to publish the lambda
+	API Gateway will reference it by its ARN and will always invoke the $LATEST uploded code. 		
+		
+!!!!
+	https://docs.aws.amazon.com/lambda/latest/dg/services-apigateway-tutorial.html
+	https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-cors.html
+	or 
+	headers: {
+      "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+      "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+    },
+	
+	For the the execution role of lambda, to allow access to CloudWatch and DynamoDB
+	instead of using those build-in AWS policies containing full access to the service
+	we could create a custom policy
+	
+	1.  Open the Policies page of the IAM console.
+	2.  Choose Create Policy.
+	3.  Choose the JSON tab, and then paste the following custom policy into the JSON editor.
+	
+	{
+	  "Version": "2012-10-17",
+	  "Statement": [
+	    {
+	      "Sid": "Stmt1428341300017",
+	      "Action": [
+	        "dynamodb:DeleteItem",
+	        "dynamodb:GetItem",
+	        "dynamodb:PutItem",
+	        "dynamodb:Query",
+	        "dynamodb:Scan",
+	        "dynamodb:UpdateItem"
+	      ],
+	      "Effect": "Allow",
+	      "Resource": "*"
+	    },
+	    {
+	      "Sid": "",
+	      "Resource": "*",
+	      "Action": [
+	        "logs:CreateLogGroup",
+	        "logs:CreateLogStream",
+	        "logs:PutLogEvents"
+	      ],
+	      "Effect": "Allow"
+	    }
+	  ]
+	}
+	
+	4.  Choose Next: Tags.
+	5.  Choose Next: Review.
+	6.  Under Review policy, for the policy Name, enter lambda-apigateway-policy.
+	7.  Choose Create policy.
+	
+	Create the role:
+	1.  Open the Roles page of the IAM console.
+	2.  Choose Create role.
+	3.  For the type of trusted entity, choose AWS service, then for the use case, choose Lambda.
+	4.  Choose Next.
+	5.  In the policy search box, enter lambda-apigateway-policy.
+	6.  In the search results, select the policy that you created (lambda-apigateway-policy), 
+		and then choose Next.
+	7.  Under Role details, for the Role name, enter lambda-apigateway-role, then choose Create role.
+
+	Later in the tutorial, you need the Amazon Resource Name (ARN) of the role you just created. 
+	On the Roles page of the IAM console, choose the name of your role (lambda-apigateway-role) 
+	and copy the Role ARN displayed on the	
+	( I think the ARN role is needed if we create the lambda from CLI to provide the execution
+	role. In the Web UI i think you can find it in the drop-down )
 	
 
 		

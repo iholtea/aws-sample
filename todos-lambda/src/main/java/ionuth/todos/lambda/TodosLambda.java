@@ -1,7 +1,5 @@
 package ionuth.todos.lambda;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import com.amazonaws.services.lambda.runtime.Context;
@@ -13,12 +11,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import ionuth.todos.model.TodoItem;
-import ionuth.todos.model.TodoList;
+import ionuth.todos.repo.TodoRepository;
+import ionuth.todos.repo.impl.dynamodb.TodoRepositoryDynamodb;
 
 public class TodosLambda implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 	
-public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
+	private static final String USER_EMAIL = "holteai@yahoo.com";
+	
+	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
 		
 		Map<String, String> pathParameters = request.getPathParameters();
 		
@@ -33,36 +33,12 @@ public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent re
 		ObjectWriter objWriter = objMapper.writerWithDefaultPrettyPrinter();
 		
 		Object returnObj = null;
+		TodoRepository todoRepo = new TodoRepositoryDynamodb();
 		
 		if( pathParameters!=null && pathParameters.containsKey("todoId") ) {
-			
-			TodoItem item = new TodoItem();
-			item.setUuid("uuid-" + pathParameters.get("todoId"));
-			item.setText("Programare pasaport");
-			item.setDone(false);
-			returnObj = item;
-			
+			returnObj = todoRepo.getListById(pathParameters.get("todoId"), USER_EMAIL);
 		} else {
-			
-			List<TodoList> todos = new ArrayList<>();
-			
-			TodoList list1 = new TodoList();
-			list1.setUuid("uuid-list-01");
-			list1.setTitle("Norway Road Trip");
-			list1.setUserEmail("holteai@yahoo.com");
-			list1.setCreationDate("2024-01-25");
-			list1.setLastUpdate("2024-01-25");
-			todos.add(list1);
-			
-			list1.setUuid("uuid-list-02");
-			list1.setTitle("Supermarket shopping");
-			list1.setUserEmail("holteai@yahoo.com");
-			list1.setCreationDate("2024-02-14");
-			list1.setLastUpdate("2024-02-14");
-			todos.add(list1);
-			
-			returnObj = todos;
-			
+			returnObj = todoRepo.getListsByUserEmail(USER_EMAIL);
 		}
 		
 		
@@ -75,8 +51,15 @@ public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent re
 		
 		
 		APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
+		// enable CORS
+		Map<String, String> responseHeaders = Map.of(
+				"Access-Control-Allow-Origin", "*",
+	            "Access-Control-Allow-Methods", "OPTIONS,GET,POST,PUT,DELETE");
+		response.setHeaders(responseHeaders);
+				
 		response.setStatusCode(200);
 		response.setBody(jsonStr);
+		
 		return response;
 		
 		
