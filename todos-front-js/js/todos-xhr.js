@@ -40,8 +40,40 @@ function fetchListById(uuid, callback) {
   xhr.send();
 }
 
+// check http return status for onload event
+// we might return 20x for created or smth different on some server exception
+function addTodoList(data, callback) {
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', baseUrl, true);
+  xhr.setRequestHeader('content-type','application/json');
+  xhr.onload = function() {
+    callback(null, xhr.responseText);
+  }
+  xhr.onerror = function() {
+    callback( 'ERR_OTHER', null );
+  }
+  xhr.send(JSON.stringify(data));
+}
+
+// check http return status for onload event
+function deleteItemById(listUuid, itemUuid, callback) {
+  const xhr = new XMLHttpRequest();
+  const itemUrl = `baseUrl/${listUuid}/items/{itemUuid}`;
+  xhr.open('DELETE', itemUrl, true);
+  xhr.setRequestHeader('content-type','application/json');
+  xhr.onload = function() {
+     callback(null, addrId);
+  }
+  xhr.onerror = function() {
+    callback( 'ERR_OTHER', null );
+  }
+  xhr.send();
+}              
+
 export default {
   fetchAllLists,
-  fetchListById  
+  fetchListById,
+  addTodoList,
+  deleteItemById  
 }
 

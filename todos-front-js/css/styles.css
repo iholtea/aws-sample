@@ -17,3 +17,7 @@
 .item-input {
   margin-top: 10px;
 }
+
+.item-del-icon {
+  color: red;
+}
