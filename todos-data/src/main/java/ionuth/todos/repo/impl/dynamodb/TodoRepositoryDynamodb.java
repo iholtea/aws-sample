@@ -1,6 +1,8 @@
 package ionuth.todos.repo.impl.dynamodb;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,9 +13,16 @@ import ionuth.todos.repo.TodoRepository;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.BatchWriteItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.BatchWriteItemResponse;
+import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.DeleteItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import software.amazon.awssdk.services.dynamodb.model.PutRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
+import software.amazon.awssdk.services.dynamodb.model.ReturnValue;
+import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
 
 public class TodoRepositoryDynamodb implements TodoRepository {
 	
@@ -32,8 +41,32 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	}
 	
 	@Override
-	public void createList(TodoList todoList) {
-		// TODO Auto-generated method stub
+	public TodoList createList(TodoList todoList) {
+		
+		List<WriteRequest> todosWriteReq = new ArrayList<>();
+		Map<String, AttributeValue> todosAttrValues = mapDynamodbFromList(todoList);
+		todosWriteReq.add( attrValues2WriteRequest(todosAttrValues) ) ;
+		
+		List<WriteRequest> itemsWriteReq = todoList.getItems().stream()
+				.map( item -> {
+					return attrValues2WriteRequest( mapDynamodbFromItem(item, todoList) );
+				})
+				.collect(Collectors.toList()) ;
+		
+		try {
+			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
+					.requestItems( Map.of(
+							LIST_TABLE_NAME, todosWriteReq,
+							ITEM_TABLE_NAME, itemsWriteReq ))
+					.build();
+			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
+			System.out.println("Batch Write response: " + batchResponse);
+			
+		} catch(DynamoDbException ex) {
+			System.err.println(ex);
+		}
+		
+		return todoList;
 		
 	}
 	
@@ -68,6 +101,10 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	
 	
 	@Override
+	//TODO since we already have the Title list in the ITEMS table
+	//we could just get all the Items by List UUID. 
+	//problem is that if there are none, we will not have the Title list
+	//we could keep it either on client or server outside of the DB repository
 	public TodoList getListById(String listUuid, String userEmail) {
 		
 		TodoList todoList = null;
@@ -138,7 +175,29 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	@Override
 	public void updateItem(TodoItem item) {
 		// TODO Auto-generated method stub
+	}
+	
+	@Override
+	public void deleteItem(String listUuid, String itemUuid) {
 		
+		Map<String, AttributeValue> keyMap = Map.of(
+					"ListUuid", AttributeValue.fromS(listUuid),
+					"ItemUuid", AttributeValue.fromS(itemUuid) );
+		
+		DeleteItemRequest deleteReq = DeleteItemRequest.builder()
+                .tableName(ITEM_TABLE_NAME)
+                .key(keyMap)
+                .returnValues(ReturnValue.ALL_OLD)
+                .build();
+		
+		try {
+			DeleteItemResponse deleteResp = dynamoClient.deleteItem(deleteReq);
+			System.out.println("Deleted items: " + deleteResp.attributes());
+		} catch (DynamoDbException ex) {
+        	System.err.println(ex);
+			//TODO throw custom exception
+			throw ex;
+        }
 	}
 	
 	private TodoList mapListFromDynamodb( Map<String, AttributeValue> dynamoObj ) {
@@ -165,6 +224,39 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		attrVal = dynamoObj.get("ListExtraInfo");
 		if( attrVal != null ) todoItem.setExtraInfo(attrVal.s());
 		return todoItem;
+	}
+	
+	private Map<String, AttributeValue> mapDynamodbFromItem(TodoItem item, TodoList todoList) {
+		Map<String, AttributeValue> attrValues = new HashMap<>();
+		attrValues.put("ListUuid", AttributeValue.fromS(todoList.getUuid()));
+		attrValues.put("ItemUuid", AttributeValue.fromS(item.getUuid()));
+		attrValues.put("ListTitle", AttributeValue.fromS(todoList.getTitle()));
+		attrValues.put("ItemText", AttributeValue.fromS(item.getText()));
+		attrValues.put("ItemDone", AttributeValue.fromBool(item.isDone()));
+		String itemExtraInfo = item.getExtraInfo();
+		if(itemExtraInfo!=null) {
+			attrValues.put("ItemExtraInfo", AttributeValue.fromS(itemExtraInfo));
+		}
+		return attrValues;
+	}
+	
+	private Map<String, AttributeValue> mapDynamodbFromList(TodoList todoList) {
+		Map<String, AttributeValue> attrValues = new HashMap<>();
+		attrValues.put("UserEmail", AttributeValue.fromS(todoList.getUserEmail()));
+		attrValues.put("ListUuid",  AttributeValue.fromS(todoList.getUuid()));
+		attrValues.put("ListTitle", AttributeValue.fromS(todoList.getTitle()));
+		attrValues.put("ListCreationDate", AttributeValue.fromS(todoList.getCreationDate()));
+		attrValues.put("ListLastUpdate", AttributeValue.fromS(todoList.getLastUpdate()));
+		String listExtraInfo = todoList.getExtraInfo();
+		if(listExtraInfo!=null) {
+			attrValues.put("ListExtraInfo", AttributeValue.fromS(listExtraInfo));
+		}
+		return attrValues;
+	}
+	
+	private WriteRequest attrValues2WriteRequest(Map<String, AttributeValue> attrValues) {
+		PutRequest putReq = PutRequest.builder().item(attrValues).build();
+		return WriteRequest.builder().putRequest(putReq).build();
 	}
 	
 	public static void main(String[] args) {

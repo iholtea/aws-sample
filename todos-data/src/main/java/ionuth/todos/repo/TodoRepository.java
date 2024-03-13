@@ -21,10 +21,12 @@ public interface TodoRepository {
      */
     TodoList getListById(String listUuid, String userEmail);
 
-    void createList(TodoList todoList);
+    TodoList createList(TodoList todoList);
 
     TodoItem getItemById(String id);
  
     void updateItem(TodoItem item);
+    
+    void deleteItem(String listUuid, String itemUuid);
 
 }

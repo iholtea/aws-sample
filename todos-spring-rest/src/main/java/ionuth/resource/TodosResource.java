@@ -1,10 +1,16 @@
 package ionuth.resource;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import ionuth.todos.model.TodoList;
@@ -31,5 +37,44 @@ public class TodosResource {
 	public TodoList getTodoListById(@PathVariable("uuid") String uuid) {
 		return todoRepo.getListById(uuid, userEmail);
 	}
+	
+	@PostMapping("/todos")
+	public TodoList addTodoList(@RequestBody TodoList todoList) {
+		return todoRepo.createList( mapForNew(todoList) );
+	}
+	
+	@DeleteMapping("todos/{listUuid}/items/{itemUuid}")
+	public void deleteItemById(@PathVariable("listUuid") String listUuid,
+								@PathVariable("itemUuid") String itemUuid) {
+		todoRepo.deleteItem(listUuid, itemUuid);
+	}
+	
+	private TodoList mapForNew(TodoList todoList) {
+		
+		System.out.println("");
+		System.out.println("Received data: ");
+		System.out.println(todoList);
+		
+		String listUUID = UUID.randomUUID().toString();
+		todoList.setUuid(listUUID);
+		
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		String dateStr = dateFormat.format(new Date());
+		todoList.setCreationDate(dateStr);
+		todoList.setLastUpdate(dateStr);
+		
+		todoList.setUserEmail(userEmail);
+		
+		todoList.getItems().forEach( item -> {
+			item.setUuid(UUID.randomUUID().toString());
+		});
+		
+		System.out.println("");
+		System.out.println("Transformed data: ");
+		System.out.println(todoList);
+		System.out.println("");
+		return todoList;
+	}
+	
 	
 }

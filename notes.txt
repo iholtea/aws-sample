@@ -454,6 +454,17 @@ use iholtea suffix where global unique names are required, like S3 buckets for e
 	( I think the ARN role is needed if we create the lambda from CLI to provide the execution
 	role. In the Web UI i think you can find it in the drop-down )
 	
+	
+	https://fontawesome.com/icons/trash-can?f=sharp&s=regular
+	
+TODOs in UI
+	
+	1.	when fetching a TodoList by ID, we should just fetch its Items
+		as the TodoList details are already stored in the globalData.todos
+		and related to that - we should fetch the items only if they are not already fetched
+		check this either by todoList.items() is empty or by adding a boolean property to 
+		each TodoList object in the globalData.todos
+	
 
 		
 

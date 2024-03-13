@@ -79,7 +79,9 @@ public class TodoList {
 
 	@Override
 	public String toString() {
-		return "TodoList [uuid=" + uuid + ", title=" + title + ", items=" + items + "]";
+		return "TodoList [uuid=" + uuid + ", title=" + title + 
+				", creationDate=" + creationDate + ", lastUpdate=" + lastUpdate +
+				System.lineSeparator() + ", items=" + items + "]";
 	}
     
     
