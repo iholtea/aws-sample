@@ -6,12 +6,12 @@
   margin-left: 5px;
 }
 
-.item-line-through {
-  text-decoration-line: line-through;
+.todo-list-display {
+  margin-left: 10px;  
 }
 
-.btn-new-list {
-  margin-top: 20px;  
+.item-line-through {
+  text-decoration-line: line-through;
 }
 
 .item-input {
@@ -20,4 +20,16 @@
 
 .item-del-icon {
   color: red;
+}
+
+.list-del-icon {
+  color: red;
+}
+
+.div-all-header {
+  margin-bottom: 10px;
+}
+
+.div-new-list-btn {
+  margin-top: 30px;
 }

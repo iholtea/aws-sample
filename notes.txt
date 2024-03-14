@@ -464,6 +464,46 @@ TODOs in UI
 		and related to that - we should fetch the items only if they are not already fetched
 		check this either by todoList.items() is empty or by adding a boolean property to 
 		each TodoList object in the globalData.todos
+		
+<ul>
+	<li><a id="todo:list:2524e1ad-91f7-4126-aef8-1ea645b620e9" href="#" class="todo-list-display">lista si robin</a></li>
+	<li><a id="todo:list:2d5b0bff-1713-4872-a030-480348ceb56d" href="#" class="todo-list-display">new title</a></li>
+	<li><a id="todo:list:6b493941-efd4-4ef8-aa86-048c4e53d970" href="#" class="todo-list-display">alta lista</a></li>
+	<li><a id="todo:list:uuid-list-01" href="#" class="todo-list-display">Norway Road Trip</a></li>
+	<li><a id="todo:list:uuid-list-02" href="#" class="todo-list-display">Supermarket shopping</a></li>
+</ul>
+
+/////////////
+
+<div class="row">
+	<div class="col"><h5>alta lista</h5></div>
+</div>
+
+<div class="row">
+	<div class="col-sm-7 col-md-5">
+		<input type="checkbox" id="check:013e6778-f174-43db-b8ca-f35ba76b15bc" class="item-checkbox">
+		<label for="check:013e6778-f174-43db-b8ca-f35ba76b15bc" class="item-text">un lucru de facut</label>
+	</div>
+	<div class="col-sm-1">
+		<a href="#" class="fa-regular fa-trash-can item-del-icon" id="item:del:013e6778-f174-43db-b8ca-f35ba76b15bc"></a>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-sm-7 col-md-5">
+		<input type="checkbox" id="check:046f83cb-5347-41c1-8afb-c720272fbe54" class="item-checkbox">
+		<label for="check:046f83cb-5347-41c1-8afb-c720272fbe54" class="item-text">al 3-lea lucru de facut</label>
+	</div>
+	<div class="col-sm-1">
+		<a href="#" class="fa-regular fa-trash-can item-del-icon" id="item:del:046f83cb-5347-41c1-8afb-c720272fbe54"></a>
+	</div>
+</div>
+
+<div class="row"><div class="col-sm-7 col-md-5"><input type="checkbox" id="check:98465921-d66f-41ec-824e-66b10b67dd56" class="item-checkbox"><label for="check:98465921-d66f-41ec-824e-66b10b67dd56" class="item-text">alt lucru de facut</label></div><div class="col-sm-1"><a href="#" class="fa-regular fa-trash-can item-del-icon" id="item:del:98465921-d66f-41ec-824e-66b10b67dd56"></a></div></div>		
+
+<i class="fa-solid fa-splotch"></i>
+<i class="fa-solid fa-diamond"></i>
+<i class="fa-solid fa-square-full"></i>		
 	
 
 		

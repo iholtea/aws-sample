@@ -43,6 +43,7 @@ function renderList(todo) {
 
   const topRow = document.createElement('div');
   topRow.classList.add('row');
+  topRow.classList.add('div-all-header');
   const topCol = document.createElement('div');
   topCol.classList.add('col');
   topCol.innerHTML = `<h5>${todo.title}</h5>`;
@@ -110,9 +111,35 @@ function processDeleteItemEvent(event) {
     targetElem = targetElem.parentElement;
   }
   const todoItemUuid = targetElem.id.split(':')[2];
+  globalData.currentItemUuid = todoItemUuid;
   console.log( `clicked delete item for id: ${todoItemUuid}` );
+  todosXhr.deleteItemById(globalData.currentTodoUuid, todoItemUuid, deleteItemCallback);
+  
+}
+
+function deleteItemCallback(err, data) {
+  if(!err) {
+    deleteItemFromCache( globalData.currentTodoUuid, globalData.currentItemUuid );
+    renderList( globalData.todos.get(globalData.currentTodoUuid) );
+  } else {
+    console.log('Error calling backed service');
+  }    
+}
+
+function deleteItemFromCache(listUuid, itemUuid) {
+  const items = globalData.todos.get(listUuid).items;
+  items.delete(itemUuid);
+}
+
+function resetRenderList() {
+  const mainContainer = document.getElementById('main-container');
+  const initHtml = '<h5>Click on a TODO list to display contents</h5>' +
+          '<h5>or create a new one</h5>';
+  mainContainer.innerHTML = initHtml;
 }
 
 export default {
-  fetchList
+  fetchList,
+  renderList,
+  resetRenderList
 }

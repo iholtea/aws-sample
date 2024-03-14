@@ -1,4 +1,7 @@
 import todosXhr from './todos-xhr.js'
+import globalData from './global-data.js'
+import todosAll from './todos-list-all.js'
+import todosDetail from './todos-list-detail.js'
 
 
 function renderNewListForm() {
@@ -103,8 +106,7 @@ function createAddSubmit() {
 function submitNewList(event) {
 
   event.preventDefault();
-  console.log('submit new form');
-
+  
   const todoData = {};
   todoData.title = document.getElementById('list-title-input').value;
   
@@ -125,7 +127,38 @@ function submitNewList(event) {
 function addListCallback(err, data) {
   if(!err) {
     console.log('new list added');
+    const todo = parseAddedList(data);
+    globalData.todos.set(todo.uuid,todo);
+    globalData.currentTodoUuid = todo.uuid;
+    todosAll.renderAllLists(globalData.todos);
+    todosDetail.renderList(todo);
+  } else {
+    console.log('Error calling backed service');
   }
+}
+
+function parseAddedList(receivedData) {
+  
+  const receivedTodo = JSON.parse(receivedData);
+  
+  const todo = {};
+  todo.uuid = receivedTodo.uuid;
+  todo.title = receivedTodo.title;
+  todo.creationDate = receivedTodo.creationDate;
+  todo.lastUpdate = receivedTodo.lastUpdate;
+  todo.extraInfo = receivedTodo.extraInfo;
+  todo.items = new Map();
+
+  receivedTodo.items.forEach( receivedItem => {
+    const todoItem = {};
+    todoItem.uuid = receivedItem.uuid;
+    todoItem.text = receivedItem.text;
+    todoItem.done = receivedItem.done;
+    todoItem.extraInfo = receivedItem.extraInfo;
+    todo.items.set( todoItem.uuid, todoItem );
+  });
+
+  return todo;
 }
 
 export default {

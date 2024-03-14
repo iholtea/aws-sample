@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,9 +44,18 @@ public class TodosResource {
 		return todoRepo.createList( mapForNew(todoList) );
 	}
 	
+	/*
+	 * should return if the operation succeeded or failed.
+	 * This could be done using with the HTTP status.
+	 * Also, it could return the received parameters either in a 
+	 * record( listUuid, itemUuid) or as a Map<String, String> 
+	 * which AWS does to pass data to and from API Gateway
+	 */
+	@CrossOrigin
 	@DeleteMapping("todos/{listUuid}/items/{itemUuid}")
 	public void deleteItemById(@PathVariable("listUuid") String listUuid,
 								@PathVariable("itemUuid") String itemUuid) {
+		System.out.println("TodosResource: invoked deleteItem");
 		todoRepo.deleteItem(listUuid, itemUuid);
 	}
 	

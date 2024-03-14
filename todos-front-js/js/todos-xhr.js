@@ -58,14 +58,13 @@ function addTodoList(data, callback) {
 // check http return status for onload event
 function deleteItemById(listUuid, itemUuid, callback) {
   const xhr = new XMLHttpRequest();
-  const itemUrl = `baseUrl/${listUuid}/items/{itemUuid}`;
+  const itemUrl = `${baseUrl}/${listUuid}/items/${itemUuid}`;
   xhr.open('DELETE', itemUrl, true);
-  xhr.setRequestHeader('content-type','application/json');
   xhr.onload = function() {
-     callback(null, addrId);
+     callback(null, xhr.responseText);
   }
   xhr.onerror = function() {
-    callback( 'ERR_OTHER', null );
+    callback('ERR_OTHER', null);
   }
   xhr.send();
 }              
