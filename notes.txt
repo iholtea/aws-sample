@@ -460,11 +460,16 @@ use iholtea suffix where global unique names are required, like S3 buckets for e
 TODOs in UI
 
 	1.  add order both to items in a todo list and for the todo list
+		
 		For Todo list we could use a timestamp ( for now its just a yyyy-mm-dd )
+		
 		As items are added as a batch request, we should use a column to order them
 		
-		what is the "natural order" for PK/SK in Dynamo ?
-		the string/int data type order?
+		Q: what is the "natural order" for PK/SK in Dynamo ? \
+		A: lexicographical order for string, numeric for numbers
+		
+		For items add a ItemOrder column, we might want to change it from UI
+		also for items have a check to oder items also by done/un-done
 		
 		NOTE:
 			A time-based UUID, also known as the version 1 UUID, is generated using 
@@ -477,7 +482,8 @@ TODOs in UI
 
 			Version 1 presents several advantages – the time sorted id is fitter to be a primary
 			key in a table, and containing the creation timestamp can help with analysis and debugging. 
-			It also has some disadvantages – the chance of collision is slightly higher when generating multiple IDs from the same host. We’ll see if this is an issue later on.
+			It also has some disadvantages – the chance of collision is slightly higher when generating multiple IDs from the same host. 
+			We’ll see if this is an issue later on.
 			
 			Also, i think it's useful for relational DBs due to the algorithm they use to create
 			the ordered index. A complete random Key means a costly insert as the index trees
@@ -518,6 +524,9 @@ TODOs in UI
 		On the other hand each update of a record means it is first read by its PK(+SK)
 		attributes updated and then written back - to keep in mind for frequent updates or records
 		
+		Pagination in DynamoDb:
+		https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html
+		
 				   
 	2.	implement authorization for delete / update operations
 		As the user email is server side an PK for TodoList-s, the operations will not work if a bad actor
@@ -539,11 +548,21 @@ TODOs in UI
 		update it on the server only if the lastUpdate is not the same day as in the database
 		so we do not update it more times per day/session
 		
-		does the LSI values need to unique ( as the SK within a partition ) ?
-		if so, we could make the LSI date#uuid , to be ordered by date ( but we need it in inverse order :) )
+		https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LSI.html
+		( it seems the timestamp stuff is a valid thing :) )
+		It seems we do not have an order by. So we could select first 10 newer than 1 year
+		If nothing found, select first 10 from whenever
 		
-		AWS docs: "When you add or update a table item, DynamoDB updates all local secondary indexes that are affected. 
-		If the indexed attributes are defined in the table, the local secondary indexes grow too." 
+		AWS docs: 
+			When you add or update a table item, DynamoDB updates all local secondary indexes that are affected. 
+		If the indexed attributes are defined in the table, the local secondary indexes grow too. 
+			In a DynamoDB table, the combined partition key value and sort key value for each item must be unique. 
+		However, in a local secondary index, the sort key value does not need to be unique for a given partition key value. 
+		If there are multiple items in the local secondary index that have the same sort key value, 
+		a Query operation returns all of the items that have the same partition key value. 
+		In the response, the matching items are not returned in any particular order.
+		
+		
 	
 	3.  handle DynamoDbException in Repository implementation. 
 		Throw custom runtime exceptions or catch them in business layer and create appropriate response to client 

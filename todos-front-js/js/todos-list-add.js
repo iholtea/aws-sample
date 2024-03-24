@@ -114,7 +114,9 @@ function submitNewList(event) {
   for( let i=1; i<=6; i++ ) {
     const itemText = document.getElementById(`item-text-input-${i}`).value;
     if( itemText !== null && itemText.trim().length>0 ) {
-      const item = {"text": itemText.trim() };
+      const item = {
+        text: itemText.trim() 
+      };
       allItems.push(item);
     }
   }
@@ -152,6 +154,7 @@ function parseAddedList(receivedData) {
   receivedTodo.items.forEach( receivedItem => {
     const todoItem = {};
     todoItem.uuid = receivedItem.uuid;
+    todoItem.listUuid = receivedItem.listUuid;
     todoItem.text = receivedItem.text;
     todoItem.done = receivedItem.done;
     todoItem.extraInfo = receivedItem.extraInfo;

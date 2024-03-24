@@ -12,15 +12,14 @@ function fetchAllListsCallback(err, data, status) {
     parseAllLists(data)
     renderAllLists(globalData.todos);
   } else if( err === 'ERR_HTTP_STATUS' ) {
-    displayAllListsMessage(`Http Status ${status} received`);    
+    displayAllListsErr(`Http Status ${status} received`);    
   } else if( err === 'ERR_OTHER' ) {
-    displayAllListsMessage('Cannot fetch TODO lists');
+    displayAllListsErr('Cannot fetch TODO lists');
   }
 }
 
 // obj['state'] = 'Mumbai' - this modifies the existing state property of obj
 // obj.state = 'Mumbai' - this should add the state property ot obj.
-// rename this to parseFetchedAllLists
 function parseAllLists(receivedData) {
   const receivedTodos = JSON.parse(receivedData);
   receivedTodos.forEach( (receivedTodo) => {
@@ -88,6 +87,60 @@ function renderAllLists(todos) {
   renderNewBtn(todosContainer);
 }
 
+function renderHeader(todosContainer) {
+  const rowDiv = document.createElement('div');
+  rowDiv.classList.add('row');
+  rowDiv.classList.add('div-all-header');
+  const colDiv = document.createElement('div');
+  colDiv.classList.add('col');
+  colDiv.innerHTML='<h4>TODO lists</h4>';
+  rowDiv.appendChild(colDiv);
+  todosContainer.appendChild(rowDiv);
+}
+
+// button to create new Todo List
+function renderNewBtn(todosContainer) {
+  
+  const rowDiv = document.createElement('div');
+  rowDiv.classList.add('row');
+  rowDiv.classList.add('div-new-list-btn');
+  
+  const colDiv = document.createElement('div');
+  colDiv.classList.add('col');
+
+  const newBtn = document.createElement('button');
+  newBtn.type = 'button';
+  newBtn.classList.add('btn');
+  newBtn.classList.add('btn-primary');
+  newBtn.innerHTML = 'New TODO list';
+  newBtn.addEventListener('click', todosAdd.renderNewListForm);
+
+  colDiv.appendChild(newBtn);
+  rowDiv.appendChild(colDiv);
+  todosContainer.appendChild(rowDiv);
+
+}
+
+function displayAllListsErr(message) {
+  const todosContainer = document.getElementById('all-lists-container');
+  todosContainer.innerHTML = '';
+  renderHeader(todosContainer);
+
+  const rowDiv = document.createElement('div');
+  rowDiv.classList.add('row');
+  const colDiv = document.createElement('div');
+  colDiv.classList.add('col');
+  colDiv.innerHTML = `<h5>${message}</h5>`;
+  rowDiv.appendChild(colDiv);
+  todosContainer.appendChild(rowDiv);
+
+  renderNewBtn(todosContainer);
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////// View Todo List details and items /////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
 function bindListsRenderActions() {
   document.querySelectorAll('.todo-list-display').forEach( elem => {
     elem.addEventListener('click', processRenderListEvent);
@@ -116,6 +169,10 @@ function processRenderListEvent(event) {
   todosDetail.fetchList(todoListUuid);
   
 }
+
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////// Delete Todo List section   ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
 function bindListsDeleteActions() {
   document.querySelectorAll('.list-del-icon').forEach( elem => {
@@ -148,56 +205,6 @@ function deleteListCallback(err,data) {
   }    
 }
 
-function displayAllListsMessage(message) {
-  const todosContainer = document.getElementById('all-lists-container');
-  todosContainer.innerHTML = '';
-  renderHeader(todosContainer);
-
-  const rowDiv = document.createElement('div');
-  rowDiv.classList.add('row');
-  const colDiv = document.createElement('div');
-  colDiv.classList.add('col');
-  colDiv.innerHTML = `<h5>${message}</h5>`;
-  rowDiv.appendChild(colDiv);
-  todosContainer.appendChild(rowDiv);
-
-  renderNewBtn(todosContainer);
-}
-
-
-function renderHeader(todosContainer) {
-  const rowDiv = document.createElement('div');
-  rowDiv.classList.add('row');
-  rowDiv.classList.add('div-all-header');
-  const colDiv = document.createElement('div');
-  colDiv.classList.add('col');
-  colDiv.innerHTML='<h4>TODO lists</h4>';
-  rowDiv.appendChild(colDiv);
-  todosContainer.appendChild(rowDiv);
-}
-
-
-function renderNewBtn(todosContainer) {
-  
-  const rowDiv = document.createElement('div');
-  rowDiv.classList.add('row');
-  rowDiv.classList.add('div-new-list-btn');
-  
-  const colDiv = document.createElement('div');
-  colDiv.classList.add('col');
-
-  const newBtn = document.createElement('button');
-  newBtn.type = 'button';
-  newBtn.classList.add('btn');
-  newBtn.classList.add('btn-primary');
-  newBtn.innerHTML = 'New TODO list';
-  newBtn.addEventListener('click', todosAdd.renderNewListForm);
-
-  colDiv.appendChild(newBtn);
-  rowDiv.appendChild(colDiv);
-  todosContainer.appendChild(rowDiv);
-
-}
 
 export default {
   fetchAllLists,

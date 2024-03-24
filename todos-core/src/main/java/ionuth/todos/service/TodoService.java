@@ -1,6 +1,8 @@
 package ionuth.todos.service;
 
 import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +23,9 @@ public class TodoService {
 	}
 	
 	public List<TodoList> getAllListsByUser() {
-		return todoRepo.getListsByUserEmail(securityService.getUserEmail());
+		List<TodoList> todos = todoRepo.getListsByUserEmail(securityService.getUserEmail());
+		Collections.sort(todos, Comparator.comparing(TodoList::getLastUpdate).reversed());
+		return todos;
 	}
 	
 	public TodoList getListById(String listUuid) {

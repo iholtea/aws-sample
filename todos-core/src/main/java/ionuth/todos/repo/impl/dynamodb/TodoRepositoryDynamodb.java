@@ -262,9 +262,6 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		
 	}
 	
-	//TODO this needs to be modified, for Items we should have 
-	//	ListUuid as Partitions Key
-	//  ItemUuid as Sort Key.  
 	@Override
 	public TodoItem createItem(TodoItem item, String userEmail) {
 		
@@ -330,9 +327,10 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		AttributeValue attrVal;
 		TodoItem todoItem = new TodoItem();
 		todoItem.setUuid( dynamoObj.get("ItemUuid").s() );
+		todoItem.setListUuid( dynamoObj.get("ListUuid").s() );
 		todoItem.setText( dynamoObj.get("ItemText").s() );
 		todoItem.setDone( dynamoObj.get("ItemDone").bool() );
-		attrVal = dynamoObj.get("ListExtraInfo");
+		attrVal = dynamoObj.get("ItemExtraInfo");
 		if( attrVal != null ) todoItem.setExtraInfo(attrVal.s());
 		return todoItem;
 	}

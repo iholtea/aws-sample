@@ -55,19 +55,6 @@ function addTodoList(data, callback) {
   xhr.send(JSON.stringify(data));
 }
 
-// check http return status for onload event
-function deleteItemById(listUuid, itemUuid, callback) {
-  const xhr = new XMLHttpRequest();
-  const itemUrl = `${baseUrl}/${listUuid}/items/${itemUuid}`;
-  xhr.open('DELETE', itemUrl, true);
-  xhr.onload = function() {
-     callback(null, xhr.responseText);
-  }
-  xhr.onerror = function() {
-    callback('ERR_OTHER', null);
-  }
-  xhr.send();
-} 
 
 // check http return status for onload event
 function deleteListById(listUuid, callback) {
@@ -89,9 +76,9 @@ function deleteListById(listUuid, callback) {
 }
 
 // check http return status for onload event
-function updateItem(listUuid, itemUuid, data, callback) {
+function updateItem(itemData, callback) {
   const xhr = new XMLHttpRequest();
-  const itemUrl = `${baseUrl}/${listUuid}/items/${itemUuid}`;
+  const itemUrl = `${baseUrl}/${itemData.listUuid}/items/${itemData.uuid}`;
   xhr.open('PUT', itemUrl, true);
   xhr.setRequestHeader('content-type','application/json');
   xhr.onload = function() {
@@ -105,13 +92,27 @@ function updateItem(listUuid, itemUuid, data, callback) {
   xhr.onerror = function() {
     callback('ERR_OTHER', null);
   }
-  xhr.send(JSON.stringify(data));
+  xhr.send(JSON.stringify(itemData));
 }
 
 // check http return status for onload event
-function addItem(listUuid, data, callback) {
+function deleteItemById(listUuid, itemUuid, callback) {
   const xhr = new XMLHttpRequest();
-  const itemUrl = `${baseUrl}/${listUuid}/items`;
+  const itemUrl = `${baseUrl}/${listUuid}/items/${itemUuid}`;
+  xhr.open('DELETE', itemUrl, true);
+  xhr.onload = function() {
+     callback(null, xhr.responseText);
+  }
+  xhr.onerror = function() {
+    callback('ERR_OTHER', null);
+  }
+  xhr.send();
+}
+
+// check http return status for onload event
+function addItem(itemData, callback) {
+  const xhr = new XMLHttpRequest();
+  const itemUrl = `${baseUrl}/${itemData.listUuid}/items`;
   xhr.open('POST', itemUrl, true);
   xhr.setRequestHeader('content-type','application/json');
   xhr.onload = function() {
@@ -125,15 +126,15 @@ function addItem(listUuid, data, callback) {
   xhr.onerror = function() {
     callback('ERR_OTHER', null);
   }
-  xhr.send(JSON.stringify(data));
+  xhr.send(JSON.stringify(itemData));
 }
 
 export default {
   fetchAllLists,
   fetchListById,
+  deleteListById,
   addTodoList,
   deleteItemById,
-  deleteListById,
   updateItem,
   addItem  
 }

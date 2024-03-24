@@ -25,7 +25,7 @@ record IntegerRecord(int x, int y, String message) {}
  * ( if it is a string or a number then it return just the string representation )
  * 
  * Also we could use as input type Map<String,String>
- * this will map the input JSON event to this Map<String, String>
+ * this will map the input JSON event to a Map<String, String>
  * It will work only if we do not have nested objects in the input JSON event
  * 
  */
