@@ -458,53 +458,114 @@ use iholtea suffix where global unique names are required, like S3 buckets for e
 	https://fontawesome.com/icons/trash-can?f=sharp&s=regular
 	
 TODOs in UI
-	
-	1.	when fetching a TodoList by ID, we should just fetch its Items
-		as the TodoList details are already stored in the globalData.todos
-		and related to that - we should fetch the items only if they are not already fetched
-		check this either by todoList.items() is empty or by adding a boolean property to 
-		each TodoList object in the globalData.todos
+
+	1.  add order both to items in a todo list and for the todo list
+		For Todo list we could use a timestamp ( for now its just a yyyy-mm-dd )
+		As items are added as a batch request, we should use a column to order them
 		
-<ul>
-	<li><a id="todo:list:2524e1ad-91f7-4126-aef8-1ea645b620e9" href="#" class="todo-list-display">lista si robin</a></li>
-	<li><a id="todo:list:2d5b0bff-1713-4872-a030-480348ceb56d" href="#" class="todo-list-display">new title</a></li>
-	<li><a id="todo:list:6b493941-efd4-4ef8-aa86-048c4e53d970" href="#" class="todo-list-display">alta lista</a></li>
-	<li><a id="todo:list:uuid-list-01" href="#" class="todo-list-display">Norway Road Trip</a></li>
-	<li><a id="todo:list:uuid-list-02" href="#" class="todo-list-display">Supermarket shopping</a></li>
-</ul>
+		what is the "natural order" for PK/SK in Dynamo ?
+		the string/int data type order?
+		
+		NOTE:
+			A time-based UUID, also known as the version 1 UUID, is generated using 
+			the current time and a unique identifier specific to the computer or network 
+			that produces the UUID. The timestamp ensures the UUID is unique, 
+			even if multiple UUIDs are generated simultaneously.
 
-/////////////
+			We’ll find two new versions of the standard (v6 and v7) that are time-related 
+			in the libraries implemented below.
 
-<div class="row">
-	<div class="col"><h5>alta lista</h5></div>
-</div>
-
-<div class="row">
-	<div class="col-sm-7 col-md-5">
-		<input type="checkbox" id="check:013e6778-f174-43db-b8ca-f35ba76b15bc" class="item-checkbox">
-		<label for="check:013e6778-f174-43db-b8ca-f35ba76b15bc" class="item-text">un lucru de facut</label>
-	</div>
-	<div class="col-sm-1">
-		<a href="#" class="fa-regular fa-trash-can item-del-icon" id="item:del:013e6778-f174-43db-b8ca-f35ba76b15bc"></a>
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-sm-7 col-md-5">
-		<input type="checkbox" id="check:046f83cb-5347-41c1-8afb-c720272fbe54" class="item-checkbox">
-		<label for="check:046f83cb-5347-41c1-8afb-c720272fbe54" class="item-text">al 3-lea lucru de facut</label>
-	</div>
-	<div class="col-sm-1">
-		<a href="#" class="fa-regular fa-trash-can item-del-icon" id="item:del:046f83cb-5347-41c1-8afb-c720272fbe54"></a>
-	</div>
-</div>
-
-<div class="row"><div class="col-sm-7 col-md-5"><input type="checkbox" id="check:98465921-d66f-41ec-824e-66b10b67dd56" class="item-checkbox"><label for="check:98465921-d66f-41ec-824e-66b10b67dd56" class="item-text">alt lucru de facut</label></div><div class="col-sm-1"><a href="#" class="fa-regular fa-trash-can item-del-icon" id="item:del:98465921-d66f-41ec-824e-66b10b67dd56"></a></div></div>		
-
-<i class="fa-solid fa-splotch"></i>
-<i class="fa-solid fa-diamond"></i>
-<i class="fa-solid fa-square-full"></i>		
+			Version 1 presents several advantages – the time sorted id is fitter to be a primary
+			key in a table, and containing the creation timestamp can help with analysis and debugging. 
+			It also has some disadvantages – the chance of collision is slightly higher when generating multiple IDs from the same host. We’ll see if this is an issue later on.
+			
+			Also, i think it's useful for relational DBs due to the algorithm they use to create
+			the ordered index. A complete random Key means a costly insert as the index trees
+			need to be rebalanced quite a lot as oposed to an ordered key like a sequence
+			
+		https://www.baeldung.com/java-generating-time-based-uuids	
+		
+		<dependency>
+		    <groupId>com.fasterxml.uuid</groupId>
+		    <artifactId>java-uuid-generator</artifactId>
+		    <version>4.1.0</version>
+		</dependency>
+		
+		System.out.println("UUID Version 1: " + Generators.timeBasedGenerator().generate());
+		System.out.println("UUID Version 6: " + Generators.timeBasedReorderedGenerator().generate());
+		System.out.println("UUID Version 7: " + Generators.timeBasedEpochGenerator().generate());
+		
+		Single Table idea
+		Partition key:  userEmail
+			as DynamoDb is using a hash function to determine the "bucket" where the records
+			will be written, it would be preferable that the PK would be uniformly distributed
+			So and UUID would be better than an email or name ( more random )
+			But the user logs with the email how to get the UUID ?
+			( would having a separate table with just email and uuid and email PK worth it 
+			to do once per login query ?)
+			Then the email will be part of the JSON token sent with every request ?
+		Sort Key
+			L/I is its a list or item to be able to get just the lists
+			#list-uuid
+			#item_uuid
+			For a list:   SK:  L#list-uuid   // query Lists by starts_with l#
+			For an item:  SK:  I#list-uuid#item-uuid
+		
+		Another thing to keep in mind is that you pay for DynamoDB by RCU ( read units )
+		So even if record is small ( 1 RCU = up to KB ) we still pay 1 or 0.5 RCU per read.
+		So it might be more cost effective to have duplicate data in records in a table
+		than reading smaller data from 2 different tables of from 2 different queries.	
+		On the other hand each update of a record means it is first read by its PK(+SK)
+		attributes updated and then written back - to keep in mind for frequent updates or records
+		
+				   
+	2.	implement authorization for delete / update operations
+		As the user email is server side an PK for TodoList-s, the operations will not work if a bad actor
+		is trying to delete TodoList-s using random Uuids
+		If we keep the TodoItem with PK List Uuid, then we need to check if the List UUID belongs to the
+		logged in user
+		( this might be a pro to use only user email as PK and a hierarchical SK )
+		
+		
+	3.	each operation on a TodoList, like delete/check/update/add new item should modify
+		the TodoList lastUpdate field which should be used to order the lists	
+		
+		i think we could use a local secondary index being the timestamp of last update
+		( but is this a good idea, to update so often the field that is an index ? )
+		Maybe it's a better idea to just scan within for the users all the todo lists
+		
+		In fact we should set the lastUpdate when a user clicks to see the details of a todoList
+		to minimize operations, especially if the timestamp would be a LSI ( local secondary index )
+		update it on the server only if the lastUpdate is not the same day as in the database
+		so we do not update it more times per day/session
+		
+		does the LSI values need to unique ( as the SK within a partition ) ?
+		if so, we could make the LSI date#uuid , to be ordered by date ( but we need it in inverse order :) )
+		
+		AWS docs: "When you add or update a table item, DynamoDB updates all local secondary indexes that are affected. 
+		If the indexed attributes are defined in the table, the local secondary indexes grow too." 
 	
+	3.  handle DynamoDbException in Repository implementation. 
+		Throw custom runtime exceptions or catch them in business layer and create appropriate response to client 
+		
+	4.  Check the "responsive-ness" of the design, too much space to the right on smaller resolutions	
+		
+	4.	add USage plan with API key - check internets
+		https://www.youtube.com/watch?v=AxhbAx4PTow	
+		
+	5.  add some pagination to either lists or items or both	
+	
+	9.	Lower priority as when fetching the list of Todos we might not fetch all the List attributes
+		( if they might contain lots of data ):
+		when fetching a TodoList by ID, we should just fetch its Items
+		as the TodoList details are already stored in the globalData.todos
+	
+		
+https://www.discworldemporium.com/reading-order/
+
+Fa programare la GTT motors pt ITP si revizie
+
+
 
 		
 

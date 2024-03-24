@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation project(':todos-data') 
+	implementation project(':todos-core') 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 

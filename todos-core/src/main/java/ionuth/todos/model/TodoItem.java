@@ -7,12 +7,10 @@ public class TodoItem {
     String extraInfo;
     boolean done = false;
     
-    public TodoItem() {}
+    String listUuid;
     
-    public TodoItem(String uuid, String text) {
-    	this.uuid = uuid;
-    	this.text = text;
-    }
+	public TodoItem() {}
+    
     
 	public String getUuid() {
 		return uuid;
@@ -45,6 +43,15 @@ public class TodoItem {
 	public void setDone(boolean done) {
 		this.done = done;
 	}
+	
+    public String getListUuid() {
+		return listUuid;
+	}
+
+	public void setListUuid(String listUuid) {
+		this.listUuid = listUuid;
+	}
+
 
 	@Override
 	public String toString() {

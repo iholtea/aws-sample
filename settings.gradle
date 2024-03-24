@@ -10,6 +10,6 @@
 rootProject.name = 'aws-sample'
 include('various-tests')
 include('lambda-test')
-include('todos-data')
+include('todos-core')
 include('todos-spring-rest')
 include('todos-lambda')

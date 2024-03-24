@@ -13,7 +13,7 @@ dependencies {
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.4'
     //implementation 'software.amazon.awssdk:dynamodb:2.21.42'
 
-    implementation project(':todos-data')
+    implementation project(':todos-core')
 	     
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
 

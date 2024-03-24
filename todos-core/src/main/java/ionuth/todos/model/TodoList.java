@@ -16,12 +16,7 @@ public class TodoList {
     
     public TodoList() {}
     
-    public TodoList(String uuid, String title) {
-    	this.uuid = uuid;
-    	this.title = title;
-    }
-
-	public String getUuid() {
+    public String getUuid() {
 		return uuid;
 	}
 
