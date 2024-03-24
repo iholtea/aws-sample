@@ -5,6 +5,7 @@ import todosDetail from './todos-list-detail.js'
 function init() {
   todosAll.fetchAllLists();
   todosDetail.resetRenderList();
+  todosDetail.bindModalItemEdit();
 }
 
 init();

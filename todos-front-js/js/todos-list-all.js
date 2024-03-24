@@ -129,7 +129,23 @@ function processDeleteListEvent(event) {
     targetElem = targetElem.parentElement;
   }
   const todoListUuid = targetElem.id.split(':')[2];
-  console.log( `TodoList to delete: ${todoListUuid}` );  
+  const todoTitle = globalData.todos.get(todoListUuid).title;
+  if( confirm(`Are you sure you want to delete TODO: ${todoTitle}`) ) {
+    globalData.currentTodoUuid = todoListUuid;
+    todosXhr.deleteListById(todoListUuid, deleteListCallback);
+  }
+  
+}
+
+function deleteListCallback(err,data) {
+  if(!err) {
+    globalData.todos.delete(globalData.currentTodoUuid);
+    globalData.currentTodoUuid = null;
+    renderAllLists(globalData.todos);
+    todosDetail.resetRenderList();
+  } else {
+    console.log('Error calling backed service');
+  }    
 }
 
 function displayAllListsMessage(message) {

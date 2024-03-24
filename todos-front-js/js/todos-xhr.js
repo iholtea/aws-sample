@@ -31,7 +31,7 @@ function fetchListById(uuid, callback) {
     if(xhr.status === 200) {
       callback(null, xhr.responseText);
     } else {
-        callback('ERR_LOAD', xhr.status);
+      callback('ERR_LOAD', xhr.status);
     }
   }
   xhr.onerror = function() {
@@ -67,12 +67,74 @@ function deleteItemById(listUuid, itemUuid, callback) {
     callback('ERR_OTHER', null);
   }
   xhr.send();
-}              
+} 
+
+// check http return status for onload event
+function deleteListById(listUuid, callback) {
+  const xhr = new XMLHttpRequest();
+  const itemUrl = `${baseUrl}/${listUuid}`;
+  xhr.open('DELETE', itemUrl, true);
+  xhr.onload = function() {
+    if(xhr.status === 200) {
+      callback(null, xhr.responseText);
+    } else {
+      console.log(`DeleteListById received status ${xhr.status} and response ${xhr.responseText}`);
+      //callback('ERR_LOAD', xhr.status);
+    }
+  }
+  xhr.onerror = function() {
+    callback('ERR_OTHER', null);
+  }
+  xhr.send();
+}
+
+// check http return status for onload event
+function updateItem(listUuid, itemUuid, data, callback) {
+  const xhr = new XMLHttpRequest();
+  const itemUrl = `${baseUrl}/${listUuid}/items/${itemUuid}`;
+  xhr.open('PUT', itemUrl, true);
+  xhr.setRequestHeader('content-type','application/json');
+  xhr.onload = function() {
+    if(xhr.status === 200) {
+      callback(null, xhr.responseText);
+    } else {
+      console.log(`UpdateItem received status ${xhr.status} and response ${xhr.responseText}`);
+      //callback('ERR_LOAD', xhr.status);
+    }
+  }
+  xhr.onerror = function() {
+    callback('ERR_OTHER', null);
+  }
+  xhr.send(JSON.stringify(data));
+}
+
+// check http return status for onload event
+function addItem(listUuid, data, callback) {
+  const xhr = new XMLHttpRequest();
+  const itemUrl = `${baseUrl}/${listUuid}/items`;
+  xhr.open('POST', itemUrl, true);
+  xhr.setRequestHeader('content-type','application/json');
+  xhr.onload = function() {
+    if(xhr.status === 200) {
+      callback(null, xhr.responseText);
+    } else {
+      console.log(`Add new item status: ${xhr.status} and response: ${xhr.responseText}`);
+      //callback('ERR_LOAD', xhr.status);
+    }
+  }
+  xhr.onerror = function() {
+    callback('ERR_OTHER', null);
+  }
+  xhr.send(JSON.stringify(data));
+}
 
 export default {
   fetchAllLists,
   fetchListById,
   addTodoList,
-  deleteItemById  
+  deleteItemById,
+  deleteListById,
+  updateItem,
+  addItem  
 }
 
