@@ -9,7 +9,7 @@ public class TodoList {
 	private String title;
     private String userEmail;
 	private String creationDate;
-	private String lastUpdate;
+	private String lastViewDate;
 	private String extraInfo;
 	
     List<TodoItem> items = new ArrayList<TodoItem>();
@@ -56,12 +56,12 @@ public class TodoList {
 		this.creationDate = creationDate;
 	}
 
-	public String getLastUpdate() {
-		return lastUpdate;
+	public String getLastViewDate() {
+		return lastViewDate;
 	}
 
-	public void setLastUpdate(String lastUpdate) {
-		this.lastUpdate = lastUpdate;
+	public void setLastViewDate(String lastViewDate) {
+		this.lastViewDate = lastViewDate;
 	}
 	
 	public String getExtraInfo() {
@@ -75,7 +75,7 @@ public class TodoList {
 	@Override
 	public String toString() {
 		return "TodoList [uuid=" + uuid + ", title=" + title + 
-				", creationDate=" + creationDate + ", lastUpdate=" + lastUpdate +
+				", creationDate=" + creationDate + ", lastViewDate=" + lastViewDate +
 				System.lineSeparator() + ", items=" + items + "]";
 	}
     

@@ -19,12 +19,12 @@ import software.amazon.awssdk.services.dynamodb.model.PutItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity;
 import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
 
 public class DynamoDbDemo {
 	
-	private static final String LIST_TABLE_NAME = "Manual-Todo-List";
-	private static final String ITEM_TABLE_NAME = "Manual-Todo-Item";
+	private static final String TABLE_NAME = "Manual-Todos";
 	
 	private final DynamoDbClient dynamoClient;
 	
@@ -38,11 +38,11 @@ public class DynamoDbDemo {
 	public void addAllTodoLists() {
 		
 		TodoListRec listNorway = new TodoListRec("holteai@yahoo.com","uuid-list-01",
-				"Norway Road Trip","2024-01-25","2024-01-25","");
+				"Norway Road Trip","2024-01-25 05:05:05","2024-01-25 05:05:05","");
 		TodoListRec listShopping = new TodoListRec("holteai@yahoo.com","uuid-list-02",
-				"Supermarket shopping","2024-02-14","2024-02-14","");
+				"Supermarket shopping","2024-02-14 05:05:05","2024-02-14 05:05:05","");
 		TodoListRec listNextWeek = new TodoListRec("john.smith@gmail.com","uuid-list-03",
-				"Week 04-10 march","2024-03-02","2024-03-02","");
+				"Week 04-10 march","2024-03-02 05:05:05","2024-03-02 05:05:05","");
 		
 		addTodoList(listNorway);
 		addTodoList(listShopping);
@@ -61,25 +61,27 @@ public class DynamoDbDemo {
 		var userEmailVal = AttributeValue.fromS(todoList.userEmail());
 		var listUuidVal = AttributeValue.fromS(todoList.uuid());
 		Map<String, AttributeValue> itemValues = new HashMap<>();
-		itemValues.put("UserEmail", userEmailVal);
-		itemValues.put("ListUuid",  listUuidVal);
+		itemValues.put("PK", userEmailVal);
+		itemValues.put("SK",  listUuidVal);
 		itemValues.put("ListTitle", AttributeValue.fromS(todoList.title()));
 		itemValues.put("ListCreationDate", AttributeValue.fromS(todoList.creationDate()));
-		itemValues.put("ListLastUpdate", AttributeValue.fromS(todoList.lastUpdated()));
+		itemValues.put("ListLastViewDate", AttributeValue.fromS(todoList.lastViewDate()));
 		
 		PutItemRequest request = PutItemRequest.builder()
-				.tableName(LIST_TABLE_NAME)
+				.tableName(TABLE_NAME)
 				.item(itemValues)
-				.conditionExpression("UserEmail <> :UserEmail AND ListUuid <> :ListUuid")
+				.conditionExpression("PK <> :UserEmail AND SK <> :ListUuid")
 				.expressionAttributeValues(Map.of(
 						":UserEmail", userEmailVal,
 						":ListUuid", listUuidVal))
+				.returnConsumedCapacity(ReturnConsumedCapacity.TOTAL)
 				.build();
 		
 		try {
-			PutItemResponse response = dynamoClient.putItem(request);
-			DynamoDbResponseMetadata responseMetadata = response.responseMetadata();
-			System.out.println("Added TodoList: " + todoList.title());
+			var response = dynamoClient.putItem(request);
+			var capacity = response.consumedCapacity();
+			double capUnits = capacity.capacityUnits();  
+			System.out.println("Added " + todoList.title() + " total consumed capacity: " + capUnits);
 		} catch(ConditionalCheckFailedException ex) {
 			System.err.println("TodoList already exists: " + todoList.title() + " # " + ex.getMessage());
 		} catch(Exception ex) {
@@ -90,11 +92,11 @@ public class DynamoDbDemo {
 	
 	public WriteRequest item2WriteRequest(TodoItemRec item) {
 		Map<String, AttributeValue> attrValues = new HashMap<>();
-		attrValues.put("ListUuid", AttributeValue.fromS(item.listUuid()));
-		attrValues.put("ItemUuid", AttributeValue.fromS(item.itemUuid()));
-		attrValues.put("ListTitle", AttributeValue.fromS(item.listTitle()));
+		attrValues.put("PK", AttributeValue.fromS(item.listUuid()));
+		attrValues.put("SK", AttributeValue.fromS(item.itemUuid()));
 		attrValues.put("ItemText", AttributeValue.fromS(item.itemText()));
 		attrValues.put("ItemDone", AttributeValue.fromBool(item.itemDone()));
+		attrValues.put("ItemOrderIdx", AttributeValue.fromN(String.valueOf(item.orderIdx())));
 		PutRequest putRequest = PutRequest.builder().item(attrValues).build();
 		return WriteRequest.builder().putRequest(putRequest).build();
 		
@@ -104,24 +106,21 @@ public class DynamoDbDemo {
 		
 		List<WriteRequest> allWriteRequests = new ArrayList<>();
 		
-		var item_01_01 = new TodoItemRec(
-				"uuid-list-01", "uuid-item-01-01", "Norway road trip",
-				"Buy travel insurance", false, "");
+		var item_01_01 = new TodoItemRec("uuid-list-01", "uuid-item-01-01", 
+				"Buy travel insurance", false, 1, "");
 		allWriteRequests.add(item2WriteRequest(item_01_01));
 		
-		var item_01_02 = new TodoItemRec(
-				"uuid-list-01", "uuid-item-01-02", "Norway road trip",
-				"Create online account for Norway road tax", true, "");
+		var item_01_02 = new TodoItemRec("uuid-list-01", "uuid-item-01-02", 
+				"Create online account for Norway road tax", true, 2, "");
 		allWriteRequests.add(item2WriteRequest(item_01_02));
 		
-		var item_01_03 = new TodoItemRec(
-				"uuid-list-01", "uuid-item-01-03", "Norway road trip",
-				"Buy travel insurance", false, "");
+		var item_01_03 = new TodoItemRec("uuid-list-01", "uuid-item-01-03",
+				"Buy travel insurance", false, 3, "");
 		allWriteRequests.add(item2WriteRequest(item_01_03));
 		
 		try {
 			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
-					.requestItems( Map.of(ITEM_TABLE_NAME, allWriteRequests) )
+					.requestItems( Map.of(TABLE_NAME, allWriteRequests) )
 					.build();
 			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
 			System.out.println("Batch Write response: " + batchResponse);
@@ -136,29 +135,25 @@ public class DynamoDbDemo {
 		
 		List<WriteRequest> allWriteRequests = new ArrayList<>();
 		
-		var item_02_01 = new TodoItemRec(
-				"uuid-list-02", "uuid-item-02-01", "Supermarket shopping",
-				"Oranges 2kg", false, "");
+		var item_02_01 = new TodoItemRec("uuid-list-02", "uuid-item-02-01",
+				"Oranges 2kg", false, 1, "");
 		allWriteRequests.add(item2WriteRequest(item_02_01));
 		
-		var item_02_02 = new TodoItemRec(
-				"uuid-list-02", "uuid-item-02-02", "Supermarket shopping",
-				"Pink lady apples 2 packs", true, "");
+		var item_02_02 = new TodoItemRec("uuid-list-02", "uuid-item-02-02",
+				"Pink lady apples 2 packs", true, 2, "");
 		allWriteRequests.add(item2WriteRequest(item_02_02));
 		
-		var item_02_03 = new TodoItemRec(
-				"uuid-list-02", "uuid-item-02-03", "Supermarket shopping",
-				"Potatoes 3kg", true, "");
+		var item_02_03 = new TodoItemRec("uuid-list-02", "uuid-item-02-03",
+				"Potatoes 3kg", true, 3, "");
 		allWriteRequests.add(item2WriteRequest(item_02_03));
 		
-		var item_02_04 = new TodoItemRec(
-				"uuid-list-02", "uuid-item-02-04", "Supermarket shopping",
-				"Orange juice 2 boxes", false, "");
+		var item_02_04 = new TodoItemRec("uuid-list-02", "uuid-item-02-04",
+				"Orange juice 2 boxes", false, 4, "");
 		allWriteRequests.add(item2WriteRequest(item_02_04));
 		
 		try {
 			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
-					.requestItems( Map.of(ITEM_TABLE_NAME, allWriteRequests) )
+					.requestItems( Map.of(TABLE_NAME, allWriteRequests) )
 					.build();
 			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
 			System.out.println("Batch Write response: " + batchResponse);
@@ -173,29 +168,25 @@ public class DynamoDbDemo {
 		
 		List<WriteRequest> allWriteRequests = new ArrayList<>();
 		
-		var item_03_01 = new TodoItemRec(
-				"uuid-list-03", "uuid-item-03-01", "Week 04-10 march",
-				"Robin and lorem ipsum dolor sit amet", false, "");
+		var item_03_01 = new TodoItemRec("uuid-list-03", "uuid-item-03-01",
+				"Robin and lorem ipsum dolor sit amet", false, 1, "");
 		allWriteRequests.add(item2WriteRequest(item_03_01));
 		
-		var item_03_02 = new TodoItemRec(
-				"uuid-list-03", "uuid-item-03-02", "Week 04-10 march",
-				"Lorem ipsum dolor sit amet is back", true, "");
+		var item_03_02 = new TodoItemRec("uuid-list-03", "uuid-item-03-02",
+				"Lorem ipsum dolor sit amet is back", true, 2, "");
 		allWriteRequests.add(item2WriteRequest(item_03_02));
 		
-		var item_03_03 = new TodoItemRec(
-				"uuid-list-03", "uuid-item-03-03", "Week 04-10 march",
-				"Lorem ipsum dolor sit amet in vacation", true, "");
+		var item_03_03 = new TodoItemRec("uuid-list-03", "uuid-item-03-03",
+				"Lorem ipsum dolor sit amet in vacation", true, 3, "");
 		allWriteRequests.add(item2WriteRequest(item_03_03));
 		
-		var item_03_04 = new TodoItemRec(
-				"uuid-list-03", "uuid-item-03-04", "Week 04-10 march",
-				"Superman versus lorem ipsum dolor sit amet", false, "");
+		var item_03_04 = new TodoItemRec("uuid-list-03", "uuid-item-03-04",
+				"Superman versus lorem ipsum dolor sit amet", false, 4, "");
 		allWriteRequests.add(item2WriteRequest(item_03_04));
 		
 		try {
 			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
-					.requestItems( Map.of(ITEM_TABLE_NAME, allWriteRequests) )
+					.requestItems( Map.of(TABLE_NAME, allWriteRequests) )
 					.build();
 			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
 			System.out.println("Batch Write response: " + batchResponse);
@@ -210,12 +201,12 @@ public class DynamoDbDemo {
 		
 		Map<String, AttributeValue> attrValues = Map.of(
 				":UserEmail", AttributeValue.fromS(userEmail),
-				":StartDate", AttributeValue.fromS("2024-01-01"));
+				":StartDate", AttributeValue.fromS("2024-01-01 00:00:00"));
 		
 		QueryRequest queryReq = QueryRequest.builder()
-				.tableName(LIST_TABLE_NAME)
-				.keyConditionExpression("UserEmail = :UserEmail")
-				.filterExpression("ListLastUpdate > :StartDate")
+				.tableName(TABLE_NAME)
+				.keyConditionExpression("PK = :UserEmail")
+				.filterExpression("ListCreationDate > :StartDate")
 				.expressionAttributeValues(attrValues)
 				.build();
 		
@@ -236,8 +227,8 @@ public class DynamoDbDemo {
 	public void getTodoItems(String listUuid) {
 		
 		QueryRequest queryReq = QueryRequest.builder()
-				.tableName(ITEM_TABLE_NAME)
-				.keyConditionExpression("ListUuid = :ListUuid")
+				.tableName(TABLE_NAME)
+				.keyConditionExpression("PK = :ListUuid")
 				.expressionAttributeValues( Map.of(
 						":ListUuid", AttributeValue.fromS(listUuid) ))
 				.build();

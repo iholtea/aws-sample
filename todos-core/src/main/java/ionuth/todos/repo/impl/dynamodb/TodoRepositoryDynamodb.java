@@ -32,11 +32,10 @@ import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
 
 public class TodoRepositoryDynamodb implements TodoRepository {
 	
-	private static final String LIST_TABLE_NAME = "Manual-Todo-List";
-	private static final String ITEM_TABLE_NAME = "Manual-Todo-Item";
+	private static final String TABLE_NAME = "Manual-Todos";
 	
 	// get only the TODOs last update after the reference date
-	private static final String REFERENCE_DATE = "2024-01-01";
+	private static final String REFERENCE_DATE = "2024-01-01 00:00:00";
 	
 	private final DynamoDbClient dynamoClient;
 	
@@ -49,21 +48,19 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	@Override
 	public TodoList createList(TodoList todoList) {
 		
-		List<WriteRequest> todosWriteReq = new ArrayList<>();
+		List<WriteRequest> writeRequests = new ArrayList<>();
 		Map<String, AttributeValue> todosAttrValues = mapDynamodbFromList(todoList);
-		todosWriteReq.add( attrValues2WriteRequest(todosAttrValues) ) ;
+		writeRequests.add( attrValues2WriteRequest(todosAttrValues) ) ;
 		
-		List<WriteRequest> itemsWriteReq = todoList.getItems().stream()
-				.map( item -> {
-					return attrValues2WriteRequest( mapDynamodbFromItem(item, todoList) );
-				})
-				.collect(Collectors.toList()) ;
+		todoList.getItems().stream()
+			.map( item -> {
+				return attrValues2WriteRequest( mapDynamodbFromItem(item) );
+			})
+			.forEach( writeRequests::add );
 		
 		try {
 			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
-					.requestItems( Map.of(
-							LIST_TABLE_NAME, todosWriteReq,
-							ITEM_TABLE_NAME, itemsWriteReq ))
+					.requestItems( Map.of(TABLE_NAME, writeRequests) )
 					.build();
 			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
 			System.out.println("Batch Create TodoList response: " + batchResponse);
@@ -80,35 +77,31 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	@Override
 	public void deleteList(String listUuid, String userEmail) {
 		
-		
-		List<WriteRequest> listRequests = new ArrayList<>();
+		List<WriteRequest> allRequests = new ArrayList<>();
 		DeleteRequest delListReq = DeleteRequest.builder().key(
-				Map.of( "UserEmail", AttributeValue.fromS(userEmail),
-						"ListUuid", AttributeValue.fromS(listUuid))).build();
-		listRequests.add( WriteRequest.builder().deleteRequest(delListReq).build());
+				Map.of( "PK", AttributeValue.fromS(userEmail),
+						"SK", AttributeValue.fromS(listUuid))).build();
+		allRequests.add( WriteRequest.builder().deleteRequest(delListReq).build());
 		
 		// in DynamoDB we if a table has both PK and SK we cannot delete using just the PK
 		// so we cannot delete items using just ListUuid we need the ItemUuid also
 		// so we need to fetch them first
-		List<WriteRequest> itemRequests = new ArrayList<>();
 		List<Map<String, AttributeValue>> selectedItems = getItemsByListIdInternal(listUuid);
-		selectedItems.forEach( map -> { 
-			DeleteRequest delItemReq = DeleteRequest.builder().key(
-					Map.of("ListUuid", map.get("ListUuid"), 
-							"ItemUuid", map.get("ItemUuid"))).build();
-			itemRequests.add(WriteRequest.builder().deleteRequest(delItemReq).build());
-		});
+		selectedItems.stream()
+			.map( attrValMap -> { 
+				DeleteRequest delItemReq = DeleteRequest.builder().key(
+						Map.of("PK", attrValMap.get("PK"), 
+								"SK", attrValMap.get("SK"))).build();
+				return WriteRequest.builder().deleteRequest(delItemReq).build(); 
+			})
+			.forEach( allRequests::add );
 		
 		try {
 			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
-					.requestItems( Map.of(
-							LIST_TABLE_NAME, listRequests,
-							ITEM_TABLE_NAME, itemRequests ))
+					.requestItems( Map.of(TABLE_NAME, allRequests ))
 					.build();
 			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
 			System.out.println("Batch Delete TodoList response: " + batchResponse);
-			
-			
 		} catch(DynamoDbException ex) {
 			System.err.println(ex);
 		}
@@ -122,9 +115,9 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 				":StartDate", AttributeValue.fromS(REFERENCE_DATE));
 		
 		QueryRequest queryReq = QueryRequest.builder()
-				.tableName(LIST_TABLE_NAME)
-				.keyConditionExpression("UserEmail = :UserEmail")
-				.filterExpression("ListLastUpdate > :StartDate")
+				.tableName(TABLE_NAME)
+				.keyConditionExpression("PK = :UserEmail")
+				.filterExpression("ListCreationDate > :StartDate")
 				.expressionAttributeValues(attrValues)
 				.build();
 		
@@ -146,10 +139,6 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	
 	
 	@Override
-	//TODO since we already have the Title list in the ITEMS table
-	//we could just get all the Items by List UUID. 
-	//problem is that if there are none, we will not have the Title list
-	//we could keep it either on client or server outside of the DB repository
 	public TodoList getListById(String listUuid, String userEmail) {
 		
 		TodoList todoList = getListByIdNoItems(listUuid, userEmail);
@@ -168,8 +157,8 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		TodoList todoList = null;
 		
 		QueryRequest queryReq = QueryRequest.builder()
-				.tableName(LIST_TABLE_NAME)
-				.keyConditionExpression("UserEmail = :UserEmail AND ListUuid = :ListUuid")
+				.tableName(TABLE_NAME)
+				.keyConditionExpression("PK = :UserEmail AND SK = :ListUuid")
 				.expressionAttributeValues( Map.of(
 						":UserEmail", AttributeValue.fromS(userEmail), 
 						":ListUuid", AttributeValue.fromS(listUuid) ))
@@ -200,8 +189,8 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	
 	private List<Map<String, AttributeValue>> getItemsByListIdInternal(String listUuid) {
 		QueryRequest queryReq = QueryRequest.builder()
-				.tableName(ITEM_TABLE_NAME)
-				.keyConditionExpression("ListUuid = :ListUuid")
+				.tableName(TABLE_NAME)
+				.keyConditionExpression("PK = :ListUuid")
 				.expressionAttributeValues( Map.of(
 						":ListUuid", AttributeValue.fromS(listUuid) ))
 				.build();
@@ -228,8 +217,8 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	public TodoItem updateItem(TodoItem item) {
 				
 		Map<String, AttributeValue> keyMap = new HashMap<>();
-		keyMap.put("ListUuid", AttributeValue.fromS(item.getListUuid()));
-		keyMap.put("ItemUuid", AttributeValue.fromS(item.getUuid()) );
+		keyMap.put("PK", AttributeValue.fromS(item.getListUuid()));
+		keyMap.put("SK", AttributeValue.fromS(item.getUuid()) );
 		
 		Map<String, AttributeValueUpdate> updateMap = new HashMap<>();
 		updateMap.put("ItemDone", AttributeValueUpdate.builder()
@@ -245,7 +234,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		}
 		
 		UpdateItemRequest request = UpdateItemRequest.builder()
-                .tableName(ITEM_TABLE_NAME)
+                .tableName(TABLE_NAME)
                 .key(keyMap)
                 .attributeUpdates(updateMap)
                 .build();
@@ -263,18 +252,16 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	}
 	
 	@Override
-	public TodoItem createItem(TodoItem item, String userEmail) {
+	public TodoItem createItem(TodoItem item) {
 		
-		TodoList todoList = getListByIdNoItems(item.getListUuid(), userEmail);
-		
-		Map<String, AttributeValue> attrValues = mapDynamodbFromItem(item, todoList);
+		Map<String, AttributeValue> attrValues = mapDynamodbFromItem(item);
 		PutItemRequest request = PutItemRequest.builder()
-	                		.tableName(ITEM_TABLE_NAME)
+	                		.tableName(TABLE_NAME)
 	                		.item(attrValues)
 	                		.build();
         try {
             PutItemResponse response = dynamoClient.putItem(request);
-            System.out.println(ITEM_TABLE_NAME + " was successfully updated. The request id is "
+            System.out.println(TABLE_NAME + " was successfully updated. The request id is "
                     + response.responseMetadata().requestId() );
         } catch (DynamoDbException ex) {
         	//TODO throw custom exception
@@ -289,11 +276,11 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	public void deleteItem(TodoItem item) {
 		
 		Map<String, AttributeValue> keyMap = Map.of(
-					"ListUuid", AttributeValue.fromS(item.getListUuid()),
-					"ItemUuid", AttributeValue.fromS(item.getUuid()) );
+					"PK", AttributeValue.fromS(item.getListUuid()),
+					"SK", AttributeValue.fromS(item.getUuid()) );
 		
 		DeleteItemRequest deleteReq = DeleteItemRequest.builder()
-                .tableName(ITEM_TABLE_NAME)
+                .tableName(TABLE_NAME)
                 .key(keyMap)
                 .returnValues(ReturnValue.ALL_OLD)
                 .build();
@@ -311,13 +298,13 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	private TodoList mapListFromDynamodb( Map<String, AttributeValue> dynamoObj ) {
 		AttributeValue attrVal;
 		TodoList todoList = new TodoList();
-		todoList.setUuid( dynamoObj.get("ListUuid").s() );
-		todoList.setUserEmail( dynamoObj.get("UserEmail").s() );
+		todoList.setUuid( dynamoObj.get("SK").s() );
+		todoList.setUserEmail( dynamoObj.get("PK").s() );
 		todoList.setTitle( dynamoObj.get("ListTitle").s() );
 		attrVal = dynamoObj.get("ListCreationDate");
 		if( attrVal != null ) todoList.setCreationDate(attrVal.s());
-		attrVal = dynamoObj.get("ListLastUpdate");
-		if( attrVal != null ) todoList.setLastUpdate(attrVal.s());
+		attrVal = dynamoObj.get("ListLastViewDate");
+		if( attrVal != null ) todoList.setLastViewDate(attrVal.s());
 		attrVal = dynamoObj.get("ListExtraInfo");
 		if( attrVal != null ) todoList.setExtraInfo(attrVal.s());
 		return todoList;
@@ -326,22 +313,23 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	private TodoItem mapItemFromDynamodb( Map<String, AttributeValue> dynamoObj ) {
 		AttributeValue attrVal;
 		TodoItem todoItem = new TodoItem();
-		todoItem.setUuid( dynamoObj.get("ItemUuid").s() );
-		todoItem.setListUuid( dynamoObj.get("ListUuid").s() );
+		todoItem.setUuid( dynamoObj.get("SK").s() );
+		todoItem.setListUuid( dynamoObj.get("PK").s() );
 		todoItem.setText( dynamoObj.get("ItemText").s() );
 		todoItem.setDone( dynamoObj.get("ItemDone").bool() );
+		todoItem.setOrderIdx( Integer.parseInt(dynamoObj.get("ItemOrderIdx").n()) );
 		attrVal = dynamoObj.get("ItemExtraInfo");
 		if( attrVal != null ) todoItem.setExtraInfo(attrVal.s());
 		return todoItem;
 	}
 	
-	private Map<String, AttributeValue> mapDynamodbFromItem(TodoItem item, TodoList todoList) {
+	private Map<String, AttributeValue> mapDynamodbFromItem(TodoItem item) {
 		Map<String, AttributeValue> attrValues = new HashMap<>();
-		attrValues.put("ListUuid", AttributeValue.fromS(todoList.getUuid()));
-		attrValues.put("ItemUuid", AttributeValue.fromS(item.getUuid()));
-		attrValues.put("ListTitle", AttributeValue.fromS(todoList.getTitle()));
+		attrValues.put("PK", AttributeValue.fromS(item.getListUuid()));
+		attrValues.put("SK", AttributeValue.fromS(item.getUuid()));
 		attrValues.put("ItemText", AttributeValue.fromS(item.getText()));
 		attrValues.put("ItemDone", AttributeValue.fromBool(item.isDone()));
+		attrValues.put("ItemOrderIdx", AttributeValue.fromN(String.valueOf(item.getOrderIdx())));
 		String itemExtraInfo = item.getExtraInfo();
 		if(itemExtraInfo!=null) {
 			attrValues.put("ItemExtraInfo", AttributeValue.fromS(itemExtraInfo));
@@ -351,11 +339,11 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	
 	private Map<String, AttributeValue> mapDynamodbFromList(TodoList todoList) {
 		Map<String, AttributeValue> attrValues = new HashMap<>();
-		attrValues.put("UserEmail", AttributeValue.fromS(todoList.getUserEmail()));
-		attrValues.put("ListUuid",  AttributeValue.fromS(todoList.getUuid()));
+		attrValues.put("PK", AttributeValue.fromS(todoList.getUserEmail()));
+		attrValues.put("SK",  AttributeValue.fromS(todoList.getUuid()));
 		attrValues.put("ListTitle", AttributeValue.fromS(todoList.getTitle()));
 		attrValues.put("ListCreationDate", AttributeValue.fromS(todoList.getCreationDate()));
-		attrValues.put("ListLastUpdate", AttributeValue.fromS(todoList.getLastUpdate()));
+		attrValues.put("ListLastViewDate", AttributeValue.fromS(todoList.getLastViewDate()));
 		String listExtraInfo = todoList.getExtraInfo();
 		if(listExtraInfo!=null) {
 			attrValues.put("ListExtraInfo", AttributeValue.fromS(listExtraInfo));

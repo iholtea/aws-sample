@@ -33,6 +33,7 @@ function parseItemsByList(receivedData) {
     todoItem.listUuid = receivedItem.listUuid;
     todoItem.text = receivedItem.text;
     todoItem.done = receivedItem.done;
+    todoItem.orderIdx = receivedItem.orderIdx;
     todoItem.extraInfo = receivedItem.extraInfo;
     cachedTodo.items.set( todoItem.uuid, todoItem );
   });
@@ -45,7 +46,10 @@ function renderList(todo) {
 
   mainContainer.appendChild( renderListTitle(todo) );
 
-  todo.items.forEach( (item,idx) => {
+  // Iteration over Maps is always in insertion order
+  // items aldread sorted by order index from the backend 
+  // so no need to sort the map.values() which is the items collection
+  todo.items.forEach( (item,itemKey) => {
     
     const rowDiv = document.createElement('div');
     rowDiv.classList.add('row');
@@ -332,10 +336,18 @@ function renderNewItem() {
 
 
 function addNewItem() {
+  const currentTodoList = globalData.todos.get(globalData.currentTodoUuid);
+  // items to add needs to have order index max + 1
+  // Iteration over Maps is always in insertion order so items in current TodoList 
+  // are already ordered. Last item has the last index
+  const itemsArr = Array.from( currentTodoList.items.values() );
+  const lastItem = itemsArr[itemsArr.length-1];
   const itemData = {
     listUuid: globalData.currentTodoUuid,
-    text: document.getElementById('input-new-item').value
+    text: document.getElementById('input-new-item').value,
+    orderIdx: lastItem.orderIdx + 1
   }
+  console.log(`Adding new todo item: ${JSON.stringify(itemData)}`);
   todosXhr.addItem(itemData, addNewItemCallback);
 }
 
@@ -351,6 +363,7 @@ function addNewItemCallback(err, data) {
     todoItem.listUuid = receivedItem.listUuid;
     todoItem.text = receivedItem.text;
     todoItem.done = receivedItem.done;
+    todoItem.orderIdx = receivedItem.orderIdx;
     todoItem.extraInfo = receivedItem.extraInfo;
     currentTodoList.items.set( todoItem.uuid, todoItem );
     

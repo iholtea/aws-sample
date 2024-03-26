@@ -4,10 +4,12 @@ public class TodoItem {
     
 	String uuid; 
     String text; 
-    String extraInfo;
     boolean done = false;
+    int orderIdx;
+    String extraInfo;
     
     String listUuid;
+    
     
 	public TodoItem() {}
     
@@ -52,10 +54,18 @@ public class TodoItem {
 		this.listUuid = listUuid;
 	}
 
+	public int getOrderIdx() {
+		return orderIdx;
+	}
+
+	public void setOrderIdx(int orderIdx) {
+		this.orderIdx = orderIdx;
+	}
 
 	@Override
 	public String toString() {
-		return "TodoItem [uuid=" + uuid + ", text=" + text + ", done=" + done + "]";
+		return "TodoItem [uuid=" + uuid + ", text=" + text + 
+				", done=" + done + ", orderIdx=" + orderIdx + "]";
 	}
     
 

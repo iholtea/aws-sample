@@ -16,6 +16,13 @@ dependencies {
 
     // Use JUnit Jupiter for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+    
+    // this platform one usually should be part of eclipse in order
+    // to run classes as JUnit within eclipse, but Eclipse 4.29 has an issue
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.10.2'
+    
+    testImplementation 'com.amazonaws:DynamoDBLocal:2.3.0'
+    testImplementation 'software.amazon.awssdk:url-connection-client:2.21.42'
 
 }
 

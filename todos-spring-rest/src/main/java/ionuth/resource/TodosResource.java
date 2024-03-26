@@ -1,8 +1,9 @@
 package ionuth.resource;
 
+import java.net.URI;
 import java.util.List;
-import java.util.UUID;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import ionuth.todos.model.TodoItem;
 import ionuth.todos.model.TodoList;
@@ -32,13 +34,22 @@ public class TodosResource {
 	}
 	
 	@GetMapping("/todos/{uuid}")
+	//TODO since we already have the TodoList details in the UI we could 
+	//just request for all items of this list and use the cached infro
+	//from the client to display TodoList title in the details view
 	public TodoList getListById(@PathVariable("uuid") String uuid) {
 		return todoService.getListById(uuid);
 	}
 	
 	@PostMapping("/todos")
-	public TodoList addTodoList(@RequestBody TodoList todoList) {
-		return todoService.addTodoList(todoList);
+	public ResponseEntity<TodoList> addTodoList(@RequestBody TodoList todoList) {
+		TodoList savedList = todoService.addTodoList(todoList);
+		// add /todos/{listUuid} as location header
+		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+				.path("/{listUuid}")
+				.buildAndExpand(savedList.getUuid())
+				.toUri();
+		return ResponseEntity.created(location).body(savedList);
 	}
 	
 	@CrossOrigin
@@ -71,8 +82,13 @@ public class TodosResource {
 	@PostMapping("/todos/{listUuid}/items")
 	public TodoItem createItem(@PathVariable("listUuid") String listUuid,
 								@RequestBody TodoItem todoItem) {
-		todoItem.setUuid(UUID.randomUUID().toString());
+		
+		// or better call the TodoService with the listUuid
+		// it should be the Service responsibility to fill the data to be sent to the Repository
+		// and maybe do some authorization checks, like if the listUuid belongs to the logged user
+		todoItem.setListUuid(listUuid);
 		return todoService.createItem(todoItem);
+	
 	}
 	
 	

@@ -115,12 +115,15 @@ function submitNewList(event) {
     const itemText = document.getElementById(`item-text-input-${i}`).value;
     if( itemText !== null && itemText.trim().length>0 ) {
       const item = {
-        text: itemText.trim() 
+        text: itemText.trim(),
+        orderIdx: i 
       };
       allItems.push(item);
     }
   }
   todoData.items = allItems;
+
+  console.log(`Adding new TodoList: ${JSON.stringify(todoData)}`);
 
   todosXhr.addTodoList( todoData, addListCallback );
 
@@ -147,7 +150,7 @@ function parseAddedList(receivedData) {
   todo.uuid = receivedTodo.uuid;
   todo.title = receivedTodo.title;
   todo.creationDate = receivedTodo.creationDate;
-  todo.lastUpdate = receivedTodo.lastUpdate;
+  todo.lastViewDate = receivedTodo.lastViewDate;
   todo.extraInfo = receivedTodo.extraInfo;
   todo.items = new Map();
 
@@ -157,6 +160,7 @@ function parseAddedList(receivedData) {
     todoItem.listUuid = receivedItem.listUuid;
     todoItem.text = receivedItem.text;
     todoItem.done = receivedItem.done;
+    todoItem.orderIdx = receivedItem.orderIdx;
     todoItem.extraInfo = receivedItem.extraInfo;
     todo.items.set( todoItem.uuid, todoItem );
   });

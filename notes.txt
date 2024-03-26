@@ -457,6 +457,55 @@ use iholtea suffix where global unique names are required, like S3 buckets for e
 	
 	https://fontawesome.com/icons/trash-can?f=sharp&s=regular
 	
+HTTP status:
+	200 Success
+	201 Created - to use after a POST request that creates some item
+	204 No Content - may be used after a DELETE request that successfully removes data
+	401 Unauthorized - may be used to let the client know it has no credential to access a resource
+	400 Bad Request - like a validation error 	
+	404 Not Found
+	500 Server Error 
+	
+///////////////////////////////////////////
+public static void main(String[] args) throws Exception {
+    AmazonDynamoDB dynamodb = null;
+    try {
+        // Create an in-memory and in-process instance of DynamoDB Local that skips HTTP
+        dynamodb = DynamoDBEmbedded.create().amazonDynamoDB();
+        // use the DynamoDB API with DynamoDBEmbedded
+        listTables(dynamodb.listTables(), "DynamoDB Embedded");
+    } finally {
+        // Shutdown the thread pools in DynamoDB Local / Embedded
+        if(dynamodb != null) {
+            dynamodb.shutdown();
+        }
+    }
+    
+    // Create an in-memory and in-process instance of DynamoDB Local that runs over HTTP
+    final String[] localArgs = { "-inMemory" };
+    DynamoDBProxyServer server = null;
+    try {
+        server = ServerRunner.createServerFromCommandLineArgs(localArgs);
+        server.start();
+
+        dynamodb = AmazonDynamoDBClientBuilder.standard().withEndpointConfiguration(
+            // we can use any region here
+            new AwsClientBuilder.EndpointConfiguration("http://localhost:8000", "us-west-2"))
+            .build();
+
+        // use the DynamoDB API over HTTP
+        listTables(dynamodb.listTables(), "DynamoDB Local over HTTP");
+    } finally {
+        // Stop the DynamoDB Local endpoint
+        if(server != null) {
+            server.stop();
+        }
+    }
+}
+
+https://github.com/aws/aws-sdk-java-v2/blob/93269d4c0416d0f72e086774265847d6af0d54ec/services-custom/dynamodb-enhanced/src/test/java/software/amazon/awssdk/extensions/dynamodb/mappingclient/functionaltests/TransactGetItemsTest.java
+/////////////////////////////
+	
 TODOs in UI
 
 	1.  add order both to items in a todo list and for the todo list
@@ -516,6 +565,20 @@ TODOs in UI
 			#item_uuid
 			For a list:   SK:  L#list-uuid   // query Lists by starts_with l#
 			For an item:  SK:  I#list-uuid#item-uuid
+			
+			But if a list record starts with L# and an Item record startd with I# we cannot
+			select them both in a single query, as SK condition supports just begins_with, it 
+			does not support NOT or other conditions.
+			
+			If we do not have the L# / I# prefix, and we have 
+			SK: list_uuid for lists
+			SK  list_uuid#item_uuid 
+			then we can select them both in the same query, but it will not be efficient to select
+			just the lists without the items, as we'll need to select begins_with( list_uuid ) and then
+			filter out the items - by contains("#") for example, but filtering happens after all the 
+			records were selected and the read capacity consumed.
+			So in the end it depends on how we plan to implement the front-end.
+			If we want to select just lists without items or not
 		
 		Another thing to keep in mind is that you pay for DynamoDB by RCU ( read units )
 		So even if record is small ( 1 RCU = up to KB ) we still pay 1 or 0.5 RCU per read.
@@ -523,6 +586,16 @@ TODOs in UI
 		than reading smaller data from 2 different tables of from 2 different queries.	
 		On the other hand each update of a record means it is first read by its PK(+SK)
 		attributes updated and then written back - to keep in mind for frequent updates or records
+		
+		!!! NOTE:
+		Key condition expressions for the Query operation
+			for PK support just equals operator: pk = :p
+			for SK it support a=b, a<b, a<=b, a>b, a=>b, a BETWEEN b AND c, begins_with( a, substr)
+				so no other conditions, especially not OR condition
+		We need Filter Expression to use OR, CONTAINS, EXISTS and other functions.	 
+		But:
+		A filter expression is applied after a Query finishes, but before the results are returned. 
+		Therefore, a Query consumes the same amount of read capacity, regardless of whether a filter expression is present.
 		
 		Pagination in DynamoDb:
 		https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html

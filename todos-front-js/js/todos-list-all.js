@@ -27,7 +27,7 @@ function parseAllLists(receivedData) {
     todo.uuid = receivedTodo.uuid;
     todo.title = receivedTodo.title;
     todo.creationDate = receivedTodo.creationDate;
-    todo.lastUpdate = receivedTodo.lastUpdate;
+    todo.lastViewDate = receivedTodo.lastViewDate;
     todo.extraInfo = receivedTodo.extraInfo;
     todo.items = new Map();
     globalData.todos.set(todo.uuid,todo);
@@ -41,7 +41,19 @@ function renderAllLists(todos) {
   
   renderHeader(todosContainer);
 
-  todos.forEach( (todoList, key) => {
+  // sort TodoLists by CreationDate reversed
+  const todosArray = Array.from( todos.values() );
+  todosArray.sort( (item, other) => {
+    if ( item.creationDate < other.creationDate ) {
+      return 1;
+    }
+    if( item.creationDate > other.creationDate ) {
+      return -1;
+    }
+    return 0;
+  });
+
+  todosArray.forEach( todoList => {
     
     const rowDiv = document.createElement('div');
     rowDiv.classList.add('row');

@@ -5,6 +5,6 @@ public record TodoListRec(
 	String uuid,
 	String title,
 	String creationDate,
-	String lastUpdated,
+	String lastViewDate,
 	String extraInfo
 ) {}

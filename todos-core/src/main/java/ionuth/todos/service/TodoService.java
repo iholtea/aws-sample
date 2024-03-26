@@ -24,12 +24,14 @@ public class TodoService {
 	
 	public List<TodoList> getAllListsByUser() {
 		List<TodoList> todos = todoRepo.getListsByUserEmail(securityService.getUserEmail());
-		Collections.sort(todos, Comparator.comparing(TodoList::getLastUpdate).reversed());
+		Collections.sort(todos, Comparator.comparing(TodoList::getCreationDate).reversed());
 		return todos;
 	}
 	
 	public TodoList getListById(String listUuid) {
-		return todoRepo.getListById(listUuid, securityService.getUserEmail());
+		TodoList todoList = todoRepo.getListById(listUuid, securityService.getUserEmail());
+		Collections.sort(todoList.getItems(), Comparator.comparing(TodoItem::getOrderIdx));
+		return todoList;
 	}
 	
 	public TodoList addTodoList(TodoList todoList) {
@@ -53,7 +55,7 @@ public class TodoService {
 	
 	public TodoItem createItem(TodoItem todoItem)  {
 		todoItem.setUuid(UUID.randomUUID().toString());
-		return todoRepo.createItem(todoItem, securityService.getUserEmail());
+		return todoRepo.createItem(todoItem);
 	}
 	
 	private TodoList mapTodoListForAdd(TodoList todoList) {
@@ -61,16 +63,21 @@ public class TodoService {
 		String listUUID = UUID.randomUUID().toString();
 		todoList.setUuid(listUUID);
 		
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String dateStr = dateFormat.format(new Date());
 		todoList.setCreationDate(dateStr);
-		todoList.setLastUpdate(dateStr);
+		todoList.setLastViewDate(dateStr);
 		
 		todoList.setUserEmail(securityService.getUserEmail());
 		
-		todoList.getItems().forEach( item -> {
-			item.setUuid(UUID.randomUUID().toString());
-		});
+		var items = todoList.getItems();
+		for(int i=0; i<items.size(); i++ ) {
+			items.get(i).setListUuid(listUUID);
+			items.get(i).setUuid(UUID.randomUUID().toString());
+			items.get(i).setOrderIdx(i+1);
+		}
+		
+		System.out.println("TodoService: adding TodoList: " + todoList);
 		
 		return todoList;
 	}
