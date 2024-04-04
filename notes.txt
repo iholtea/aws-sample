@@ -85,7 +85,8 @@ NOTE
     Bucket policies (check https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html)
 
     Deny access exception some IP address class
-
+	213.233.104.138
+	
     {
       "Version": "2012-10-17",
       "Id": "BlockIPAddr",
@@ -131,18 +132,18 @@ NOTE
             add a bucket policy to enable access
             go to Permission tab in the bucket and edit the Bucket policy
 
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Sid": "PublicRead",
-                        "Effect": "Allow",
-                        "Principal": "*",
-                        "Action": "s3:GetObject",
-                        "Resource": "arn:aws:s3:::test-static-site-iholtea/*"
-                    }
-                ]
-            }
+			{
+			    "Version": "2012-10-17",
+			    "Statement": [
+			        {
+			            "Sid": "PublicRead",
+			            "Effect": "Allow",
+			            "Principal": "*",
+			            "Action": "s3:GetObject",
+			            "Resource": "arn:aws:s3:::test-static-site-iholtea/*"
+			        }
+			    ]
+			}
 
 API Gateway - there are multiple types
     Websocket
@@ -454,16 +455,50 @@ use iholtea suffix where global unique names are required, like S3 buckets for e
 	( I think the ARN role is needed if we create the lambda from CLI to provide the execution
 	role. In the Web UI i think you can find it in the drop-down )
 	
-	
 	https://fontawesome.com/icons/trash-can?f=sharp&s=regular
+	
+Add Usage Plan / API key to limit number of requests
+	
+	1.	Go To API Gateway section and then Usage Plans
+		Create Usage plan
+			provide name: manual-todo-usage-lan
+			Throttling
+				Rate - requests per second: 5
+				Burst - concurrent requests: 5
+				Quota - requests per month / week / day:  100 per day  
+	
+	2.	Add API stage ( stage of an API Gateway ) to the usage plan		
+		it seems it's not limiting requests just by adding the stage to the plan
+		we need to add also API keys
+		
+	3.	Create API Key from API Gateway section
+		name: manual-todo-api-key	
+		leave auto generate type 
+		add API key to usage plan ( can be done both from the API key or from Usage plan )
+		
+	4.	We need to go to our API in API Gateway and for each method of each endpoint
+		go to method request tab and enable API Key required
+		
+	5.	all requests to API gateway not need to provide the http header
+		x-api-key  with the API Key value: AGdASLxD8t3chg1F6uCe251G2vFWrdQt6ZgUnP8K	
+		
+	Note:
+		it would seem any change to Usage Plan require a couple of seconds or a minute
+		to take effect
+		
+			
+		
+		
 	
 HTTP status:
 	200 Success
 	201 Created - to use after a POST request that creates some item
 	204 No Content - may be used after a DELETE request that successfully removes data
 	401 Unauthorized - may be used to let the client know it has no credential to access a resource
-	400 Bad Request - like a validation error 	
+	400 Bad Request - like a validation error 
+	403 Forbidden - for example API Gateway when required API key not provided	
 	404 Not Found
+	429 Too Many Request - for example API Gateway when request limit exceeded
 	500 Server Error 
 	
 ///////////////////////////////////////////
@@ -505,8 +540,23 @@ public static void main(String[] args) throws Exception {
 
 https://github.com/aws/aws-sdk-java-v2/blob/93269d4c0416d0f72e086774265847d6af0d54ec/services-custom/dynamodb-enhanced/src/test/java/software/amazon/awssdk/extensions/dynamodb/mappingclient/functionaltests/TransactGetItemsTest.java
 /////////////////////////////
+
+
 	
 TODOs in UI
+	
+	0.	Add http status code error handling in client JS
+		403 / 429 related api key / too many request
+		Later add validation of accessing data, set 400 bad request
+		if user tries to access data that's not his
+		( too expensive to determine if that data is on some other user
+		or does not exist )
+		Use HttpStatusCode as numeric as the first parameter of the callback methods
+		use a 999 value for the Generic error, like maybe API Gateway not reachable
+		
+		create a div at the bottom of the screen to display error messages
+		each callback should delete the error text - should be easier
+		
 
 	1.  add order both to items in a todo list and for the todo list
 		
@@ -644,6 +694,9 @@ TODOs in UI
 		
 	4.	add USage plan with API key - check internets
 		https://www.youtube.com/watch?v=AxhbAx4PTow	
+		Note - we can do some throttling on the API Gateway stage
+			but we can provide only max number of requests pe second and concurrent requests
+			With API Key usage plans we can limit number of requests per month also
 		
 	5.  add some pagination to either lists or items or both	
 	
@@ -656,6 +709,9 @@ TODOs in UI
 https://www.discworldemporium.com/reading-order/
 
 Fa programare la GTT motors pt ITP si revizie
+
+https://johntipper.org/setting-up-the-aws-cdk-with-java-and-gradle/
+https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/setup-project-gradle.html
 
 
 

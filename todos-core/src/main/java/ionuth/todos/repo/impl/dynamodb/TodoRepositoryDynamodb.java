@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import ionuth.todos.model.TodoItem;
 import ionuth.todos.model.TodoList;
 import ionuth.todos.repo.TodoRepository;
-import software.amazon.awssdk.regions.Region;
+import ionuth.todos.repo.util.TodoDynamoMapper;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeAction;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
@@ -34,27 +34,25 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	
 	private static final String TABLE_NAME = "Manual-Todos";
 	
-	// get only the TODOs last update after the reference date
-	private static final String REFERENCE_DATE = "2024-01-01 00:00:00";
-	
 	private final DynamoDbClient dynamoClient;
+	private final TodoDynamoMapper dynamoMapper;
 	
-	public TodoRepositoryDynamodb() {
-		dynamoClient = DynamoDbClient.builder()
-				.region(Region.US_EAST_1)
-		        .build();
+	// constructor injection
+	public TodoRepositoryDynamodb(DynamoDbClient dynamoClient, TodoDynamoMapper dynamoMapper) {
+		this.dynamoClient = dynamoClient; 
+		this.dynamoMapper = dynamoMapper;
 	}
 	
 	@Override
 	public TodoList createList(TodoList todoList) {
 		
 		List<WriteRequest> writeRequests = new ArrayList<>();
-		Map<String, AttributeValue> todosAttrValues = mapDynamodbFromList(todoList);
+		Map<String, AttributeValue> todosAttrValues = dynamoMapper.mapDynamodbFromList(todoList);
 		writeRequests.add( attrValues2WriteRequest(todosAttrValues) ) ;
 		
 		todoList.getItems().stream()
 			.map( item -> {
-				return attrValues2WriteRequest( mapDynamodbFromItem(item) );
+				return attrValues2WriteRequest( dynamoMapper.mapDynamodbFromItem(item) );
 			})
 			.forEach( writeRequests::add );
 		
@@ -109,10 +107,10 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	}
 	
 	@Override
-	public List<TodoList> getListsByUserEmail(String userEmail) {
+	public List<TodoList> getListsByUserEmail(String userEmail, String startDate) {
 		Map<String, AttributeValue> attrValues = Map.of(
 				":UserEmail", AttributeValue.fromS(userEmail),
-				":StartDate", AttributeValue.fromS(REFERENCE_DATE));
+				":StartDate", AttributeValue.fromS(startDate));
 		
 		QueryRequest queryReq = QueryRequest.builder()
 				.tableName(TABLE_NAME)
@@ -126,7 +124,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 			System.out.println("TodoRepositoryDynamodb: Found: " + response.count()  + " TODOs for User: " + userEmail);
 			if( response.count() > 0 ) {
 				List<Map<String, AttributeValue>> items = response.items();
-				return items.stream().map(this::mapListFromDynamodb).collect(Collectors.toList());
+				return items.stream().map(dynamoMapper::mapListFromDynamodb).collect(Collectors.toList());
 			} else {
 				return Collections.emptyList();
 			}
@@ -167,7 +165,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		try {
 			QueryResponse response = dynamoClient.query(queryReq);
 			if(response.hasItems()) {
-				todoList = mapListFromDynamodb( response.items().get(0) );
+				todoList = dynamoMapper.mapListFromDynamodb( response.items().get(0) );
 			} else {
 				//TODO throw a custom DataNotFound exception
 				throw new RuntimeException("Todo List not found with UUID: " + listUuid);
@@ -183,7 +181,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	
 	private List<TodoItem> getItemsByListId(String listUuid) {
 		return getItemsByListIdInternal(listUuid).stream()
-				.map(this::mapItemFromDynamodb)
+				.map(dynamoMapper::mapItemFromDynamodb)
 				.collect(Collectors.toList());
 	}
 	
@@ -254,7 +252,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	@Override
 	public TodoItem createItem(TodoItem item) {
 		
-		Map<String, AttributeValue> attrValues = mapDynamodbFromItem(item);
+		Map<String, AttributeValue> attrValues = dynamoMapper.mapDynamodbFromItem(item);
 		PutItemRequest request = PutItemRequest.builder()
 	                		.tableName(TABLE_NAME)
 	                		.item(attrValues)
@@ -295,79 +293,9 @@ public class TodoRepositoryDynamodb implements TodoRepository {
         }
 	}
 	
-	private TodoList mapListFromDynamodb( Map<String, AttributeValue> dynamoObj ) {
-		AttributeValue attrVal;
-		TodoList todoList = new TodoList();
-		todoList.setUuid( dynamoObj.get("SK").s() );
-		todoList.setUserEmail( dynamoObj.get("PK").s() );
-		todoList.setTitle( dynamoObj.get("ListTitle").s() );
-		attrVal = dynamoObj.get("ListCreationDate");
-		if( attrVal != null ) todoList.setCreationDate(attrVal.s());
-		attrVal = dynamoObj.get("ListLastViewDate");
-		if( attrVal != null ) todoList.setLastViewDate(attrVal.s());
-		attrVal = dynamoObj.get("ListExtraInfo");
-		if( attrVal != null ) todoList.setExtraInfo(attrVal.s());
-		return todoList;
-	}
-	
-	private TodoItem mapItemFromDynamodb( Map<String, AttributeValue> dynamoObj ) {
-		AttributeValue attrVal;
-		TodoItem todoItem = new TodoItem();
-		todoItem.setUuid( dynamoObj.get("SK").s() );
-		todoItem.setListUuid( dynamoObj.get("PK").s() );
-		todoItem.setText( dynamoObj.get("ItemText").s() );
-		todoItem.setDone( dynamoObj.get("ItemDone").bool() );
-		todoItem.setOrderIdx( Integer.parseInt(dynamoObj.get("ItemOrderIdx").n()) );
-		attrVal = dynamoObj.get("ItemExtraInfo");
-		if( attrVal != null ) todoItem.setExtraInfo(attrVal.s());
-		return todoItem;
-	}
-	
-	private Map<String, AttributeValue> mapDynamodbFromItem(TodoItem item) {
-		Map<String, AttributeValue> attrValues = new HashMap<>();
-		attrValues.put("PK", AttributeValue.fromS(item.getListUuid()));
-		attrValues.put("SK", AttributeValue.fromS(item.getUuid()));
-		attrValues.put("ItemText", AttributeValue.fromS(item.getText()));
-		attrValues.put("ItemDone", AttributeValue.fromBool(item.isDone()));
-		attrValues.put("ItemOrderIdx", AttributeValue.fromN(String.valueOf(item.getOrderIdx())));
-		String itemExtraInfo = item.getExtraInfo();
-		if(itemExtraInfo!=null) {
-			attrValues.put("ItemExtraInfo", AttributeValue.fromS(itemExtraInfo));
-		}
-		return attrValues;
-	}
-	
-	private Map<String, AttributeValue> mapDynamodbFromList(TodoList todoList) {
-		Map<String, AttributeValue> attrValues = new HashMap<>();
-		attrValues.put("PK", AttributeValue.fromS(todoList.getUserEmail()));
-		attrValues.put("SK",  AttributeValue.fromS(todoList.getUuid()));
-		attrValues.put("ListTitle", AttributeValue.fromS(todoList.getTitle()));
-		attrValues.put("ListCreationDate", AttributeValue.fromS(todoList.getCreationDate()));
-		attrValues.put("ListLastViewDate", AttributeValue.fromS(todoList.getLastViewDate()));
-		String listExtraInfo = todoList.getExtraInfo();
-		if(listExtraInfo!=null) {
-			attrValues.put("ListExtraInfo", AttributeValue.fromS(listExtraInfo));
-		}
-		return attrValues;
-	}
-	
 	private WriteRequest attrValues2WriteRequest(Map<String, AttributeValue> attrValues) {
 		PutRequest putReq = PutRequest.builder().item(attrValues).build();
 		return WriteRequest.builder().putRequest(putReq).build();
 	}
 	
-	public static void main(String[] args) {
-		
-		TodoRepository todoRepo = new TodoRepositoryDynamodb();
-		
-		List<TodoList> todoLists = todoRepo.getListsByUserEmail("holteai@yahoo.com");
-		System.out.println();
-		System.out.println(todoLists);
-		
-		TodoList todoList = todoRepo.getListById("uuid-list-02", "holteai@yahoo.com");
-		System.out.println();
-		System.out.println(todoList);
-		
-	}
-
 }

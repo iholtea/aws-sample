@@ -175,7 +175,7 @@ public class DynamoGenericTest {
 				.build();
 		QueryResponse response = dynamoClient.query(queryReq);
 		assertTrue(response.hasItems(), "Query for one item");
-		assertEquals(response.items().size(), 1);
+		assertEquals(response.count() , 1);
 		
 		Map<String, AttributeValue> result = response.items().get(0);
 		assertEquals(result.get("UserEmail").s(), "vasile@gmail.com");

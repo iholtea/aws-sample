@@ -7,8 +7,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import ionuth.todos.repo.TodoRepository;
 import ionuth.todos.repo.impl.dynamodb.TodoRepositoryDynamodb;
+import ionuth.todos.repo.util.TodoDynamoMapper;
 import ionuth.todos.service.SecurityService;
 import ionuth.todos.service.TodoService;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
 public class AppConfig {
@@ -27,13 +30,24 @@ public class AppConfig {
 	}
 	
 	@Bean
-	public TodoRepository todoRepository() {
-		return new TodoRepositoryDynamodb();
+	public SecurityService securityService() {
+		return new SecurityService();
 	}
 	
 	@Bean
-	public SecurityService securityService() {
-		return new SecurityService();
+	public DynamoDbClient dynamoDbClient() {
+		return DynamoDbClient.builder()
+				.region(Region.US_EAST_1)
+		        .build();
+	}
+	
+	public TodoDynamoMapper todoDynamoMapper() {
+		return new TodoDynamoMapper();
+	}
+	
+	@Bean
+	public TodoRepository todoRepository() {
+		return new TodoRepositoryDynamodb(dynamoDbClient(), todoDynamoMapper());
 	}
 	
 	@Bean

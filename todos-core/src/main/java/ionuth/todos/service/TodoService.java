@@ -13,6 +13,9 @@ import ionuth.todos.repo.TodoRepository;
 
 public class TodoService {
 	
+	// get only the TODOs last update after the reference date
+	private static final String REFERENCE_DATE = "2024-01-01 00:00:00";
+	
 	private final TodoRepository todoRepo;
 	private final SecurityService securityService;
 	
@@ -23,7 +26,7 @@ public class TodoService {
 	}
 	
 	public List<TodoList> getAllListsByUser() {
-		List<TodoList> todos = todoRepo.getListsByUserEmail(securityService.getUserEmail());
+		List<TodoList> todos = todoRepo.getListsByUserEmail(securityService.getUserEmail(), REFERENCE_DATE);
 		Collections.sort(todos, Comparator.comparing(TodoList::getCreationDate).reversed());
 		return todos;
 	}

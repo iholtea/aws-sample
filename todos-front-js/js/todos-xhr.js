@@ -1,5 +1,7 @@
-const baseUrl = 'http://localhost:8080/todos';
-//const baseUrl = 'https://95k6wo08hg.execute-api.us-east-1.amazonaws.com/test/todos'
+const apiKey = 'AGdASLxD8t3chg1F6uCe251G2vFWrdQt6ZgUnP8K';
+const apiKeyHeader = 'x-api-key';
+//const baseUrl = 'http://localhost:8080/todos';
+const baseUrl = 'https://95k6wo08hg.execute-api.us-east-1.amazonaws.com/test/todos'
 
 /*
 * I guess I could create a successCallback and an errorCallback
@@ -7,6 +9,7 @@ const baseUrl = 'http://localhost:8080/todos';
 function  fetchAllLists(callback) {
   const xhr = new XMLHttpRequest();
   xhr.open('GET', baseUrl, true);
+  xhr.setRequestHeader(apiKeyHeader, apiKey);
   xhr.onload = function() {
     if(xhr.status === 200) {
       callback(null, xhr.responseText);
@@ -27,6 +30,7 @@ function fetchListById(uuid, callback) {
   const listUrl = `${baseUrl}/${uuid}`;
   const xhr = new XMLHttpRequest();
   xhr.open('GET', listUrl, true);
+  xhr.setRequestHeader(apiKeyHeader, apiKey);
   xhr.onload = function() {
     if(xhr.status === 200) {
       callback(null, xhr.responseText);
@@ -46,6 +50,7 @@ function addTodoList(data, callback) {
   const xhr = new XMLHttpRequest();
   xhr.open('POST', baseUrl, true);
   xhr.setRequestHeader('content-type','application/json');
+  xhr.setRequestHeader(apiKeyHeader, apiKey);
   xhr.onload = function() {
     callback(null, xhr.responseText);
   }
@@ -61,6 +66,7 @@ function deleteListById(listUuid, callback) {
   const xhr = new XMLHttpRequest();
   const itemUrl = `${baseUrl}/${listUuid}`;
   xhr.open('DELETE', itemUrl, true);
+  xhr.setRequestHeader(apiKeyHeader, apiKey);
   xhr.onload = function() {
     if(xhr.status === 200) {
       callback(null, xhr.responseText);
@@ -81,6 +87,7 @@ function updateItem(itemData, callback) {
   const itemUrl = `${baseUrl}/${itemData.listUuid}/items/${itemData.uuid}`;
   xhr.open('PUT', itemUrl, true);
   xhr.setRequestHeader('content-type','application/json');
+  xhr.setRequestHeader(apiKeyHeader, apiKey);
   xhr.onload = function() {
     if(xhr.status === 200) {
       callback(null, xhr.responseText);
@@ -100,6 +107,7 @@ function deleteItemById(listUuid, itemUuid, callback) {
   const xhr = new XMLHttpRequest();
   const itemUrl = `${baseUrl}/${listUuid}/items/${itemUuid}`;
   xhr.open('DELETE', itemUrl, true);
+  xhr.setRequestHeader(apiKeyHeader, apiKey);
   xhr.onload = function() {
      callback(null, xhr.responseText);
   }
@@ -115,8 +123,9 @@ function addItem(itemData, callback) {
   const itemUrl = `${baseUrl}/${itemData.listUuid}/items`;
   xhr.open('POST', itemUrl, true);
   xhr.setRequestHeader('content-type','application/json');
+  xhr.setRequestHeader(apiKeyHeader, apiKey);
   xhr.onload = function() {
-    if(xhr.status === 200) {
+    if(xhr.status === 200 || xhr.status === 201) {
       callback(null, xhr.responseText);
     } else {
       console.log(`Add new item status: ${xhr.status} and response: ${xhr.responseText}`);

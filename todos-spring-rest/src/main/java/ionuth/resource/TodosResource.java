@@ -83,9 +83,7 @@ public class TodosResource {
 	public TodoItem createItem(@PathVariable("listUuid") String listUuid,
 								@RequestBody TodoItem todoItem) {
 		
-		// or better call the TodoService with the listUuid
-		// it should be the Service responsibility to fill the data to be sent to the Repository
-		// and maybe do some authorization checks, like if the listUuid belongs to the logged user
+		//TODO some authorization checks, like if the listUuid belongs to the logged user
 		todoItem.setListUuid(listUuid);
 		return todoService.createItem(todoItem);
 	

@@ -7,7 +7,7 @@ import ionuth.todos.model.TodoList;
 
 public interface TodoRepository {
 	
-	List<TodoList> getListsByUserEmail(String userEmail);
+	List<TodoList> getListsByUserEmail(String userEmail, String startDate);
 	
     TodoList getListById(String listUuid, String userEmail);
 

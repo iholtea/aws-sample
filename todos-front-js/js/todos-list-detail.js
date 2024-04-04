@@ -334,7 +334,6 @@ function renderNewItem() {
 
 }
 
-
 function addNewItem() {
   const currentTodoList = globalData.todos.get(globalData.currentTodoUuid);
   // items to add needs to have order index max + 1
