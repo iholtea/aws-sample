@@ -1,0 +1,100 @@
+
+AWS CDK ( Cloud Development Kit )
+	software development framework for defining cloud infrastructure in code
+	and provision it through CloudFormation
+	
+We write code in our language of choice (Java, Typescript, Python ) using the
+CDK libraries provided by AWS and then we use the CDK CLI to deploy
+the generated CloudFormation template to AWS.
+
+Stack - a collection of AWS entities like S3 buckets, Lambdas, DynamoDB tables
+that we want to create.
+
+Environment - the target AWS account and AWS region where stacks are deployed to.
+All stacks in a CDK app are explicitly or implicitly associated with an environment.
+
+If we have just one (default) profile configured on a machine which we use 
+to interact with the AWS CLI then it will be the default environment and 
+we do not need to configure one.
+
+Before being able to perform any CDK CLI actions we need to run
+
+cdk bootstrap  
+//cdk bootstrap aws://123456789012/us-east-1 if we do not use the default environment
+	this will create stuff on our AWS account that CDK needs like
+	a S3 bucket where it will upload the CloudFormation template in order
+	to create the artifacts, some IAM roles it needs for various stuff
+	
+	it also created a CloundFormation stack named CDKToolkit which includes 
+	resources needed to deploy AWS CDK apps into this environment
+	
+Bootstrapping is the process of preparing an environment for deployment. 
+Bootstrapping is a one-time action that you must perform for every environment 
+that you deploy resources into.
+
+cdk synth 
+	will create the CloudFormation template in our project in out subfolder
+	
+cdk deploy 
+	will deploy it to AWS and create the entities like Buckets, Lambdas	
+	
+cdk diff
+	to check the difference between the deployed stuff and what we currently
+	added/modified	
+	
+	
+Constructs overview
+	constructs represent one resource like and S3 bucket( or more resources )
+	
+	Level 1
+		low-level constructs, almost directly represent CloudFormation resources
+		e.g. CfnBucket, CfnQueue
+	Level 2
+		higher level curated constructs with convenient defaults
+		e.g. Bucket from the aws-s3 
+	Level 3
+		patterns - entire opinionated AWS architectures like for example
+		ApplicationLoadBalancedFargateService
+		
+Level 1 code example - CfnBucket to provision a S3 bucket
+	
+	PublicAccessBlockConfigurationProperty accessConfig =
+		PublicAccessBlockConfigurationProperty.builder()
+			.restrictPublicBuckets(true)
+			.ignorePublicAcls(true)
+			.blockPublicAcls(true)
+			.blockPublicPolicy(true)
+			.build();
+		
+	CfnBucketProps bucketProps = CfnBucketProps.builder()
+			.bucketName("lvl1-construct-bucket-iholtea")
+			.publicAccessBlockConfiguration(accessConfig)
+			.build();
+	
+	CfnBucket cfnBucket = new CfnBucket(this, "L1S3Bucket", bucketProps);
+	cfnBucket.applyRemovalPolicy(RemovalPolicy.DESTROY);
+	
+Level 2 code example:
+	
+	BucketProps bucketProps = BucketProps.builder()
+			.bucketName("cdk-todo-site-iholtea")
+			.blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
+			// this will automatically create a KMS Key and bind it to the bucket
+			// with Lvl1 we would need to specifically code all this
+			.encryption(BucketEncryption.KMS)
+			.build();
+	
+	Bucket bucket = new Bucket(this, "TodoBucketId", bucketProps);
+	bucket.applyRemovalPolicy(RemovalPolicy.DESTROY);
+	
+///////////////
+
+AWS::S3::BucketPolicy Access Denied Service: S3, Status Code: 403		 		
+		
+			 		
+
+
+
+
+	
+
