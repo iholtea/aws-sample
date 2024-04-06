@@ -32,15 +32,15 @@ import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
 
 public class TodoRepositoryDynamodb implements TodoRepository {
 	
-	private static final String TABLE_NAME = "Manual-Todos";
-	
 	private final DynamoDbClient dynamoClient;
 	private final TodoDynamoMapper dynamoMapper;
+	private final String tableName;
 	
 	// constructor injection
-	public TodoRepositoryDynamodb(DynamoDbClient dynamoClient, TodoDynamoMapper dynamoMapper) {
+	public TodoRepositoryDynamodb(DynamoDbClient dynamoClient, TodoDynamoMapper dynamoMapper, String tableName) {
 		this.dynamoClient = dynamoClient; 
 		this.dynamoMapper = dynamoMapper;
+		this.tableName = tableName;
 	}
 	
 	@Override
@@ -58,7 +58,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		
 		try {
 			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
-					.requestItems( Map.of(TABLE_NAME, writeRequests) )
+					.requestItems( Map.of(tableName, writeRequests) )
 					.build();
 			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
 			System.out.println("Batch Create TodoList response: " + batchResponse);
@@ -96,7 +96,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		
 		try {
 			BatchWriteItemRequest batchRequest = BatchWriteItemRequest.builder()
-					.requestItems( Map.of(TABLE_NAME, allRequests ))
+					.requestItems( Map.of(tableName, allRequests ))
 					.build();
 			BatchWriteItemResponse batchResponse = dynamoClient.batchWriteItem(batchRequest);
 			System.out.println("Batch Delete TodoList response: " + batchResponse);
@@ -113,7 +113,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 				":StartDate", AttributeValue.fromS(startDate));
 		
 		QueryRequest queryReq = QueryRequest.builder()
-				.tableName(TABLE_NAME)
+				.tableName(tableName)
 				.keyConditionExpression("PK = :UserEmail")
 				.filterExpression("ListCreationDate > :StartDate")
 				.expressionAttributeValues(attrValues)
@@ -155,7 +155,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		TodoList todoList = null;
 		
 		QueryRequest queryReq = QueryRequest.builder()
-				.tableName(TABLE_NAME)
+				.tableName(tableName)
 				.keyConditionExpression("PK = :UserEmail AND SK = :ListUuid")
 				.expressionAttributeValues( Map.of(
 						":UserEmail", AttributeValue.fromS(userEmail), 
@@ -187,7 +187,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 	
 	private List<Map<String, AttributeValue>> getItemsByListIdInternal(String listUuid) {
 		QueryRequest queryReq = QueryRequest.builder()
-				.tableName(TABLE_NAME)
+				.tableName(tableName)
 				.keyConditionExpression("PK = :ListUuid")
 				.expressionAttributeValues( Map.of(
 						":ListUuid", AttributeValue.fromS(listUuid) ))
@@ -232,7 +232,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		}
 		
 		UpdateItemRequest request = UpdateItemRequest.builder()
-                .tableName(TABLE_NAME)
+                .tableName(tableName)
                 .key(keyMap)
                 .attributeUpdates(updateMap)
                 .build();
@@ -254,12 +254,12 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 		
 		Map<String, AttributeValue> attrValues = dynamoMapper.mapDynamodbFromItem(item);
 		PutItemRequest request = PutItemRequest.builder()
-	                		.tableName(TABLE_NAME)
+	                		.tableName(tableName)
 	                		.item(attrValues)
 	                		.build();
         try {
             PutItemResponse response = dynamoClient.putItem(request);
-            System.out.println(TABLE_NAME + " was successfully updated. The request id is "
+            System.out.println(tableName + " was successfully updated. The request id is "
                     + response.responseMetadata().requestId() );
         } catch (DynamoDbException ex) {
         	//TODO throw custom exception
@@ -278,7 +278,7 @@ public class TodoRepositoryDynamodb implements TodoRepository {
 					"SK", AttributeValue.fromS(item.getUuid()) );
 		
 		DeleteItemRequest deleteReq = DeleteItemRequest.builder()
-                .tableName(TABLE_NAME)
+                .tableName(tableName)
                 .key(keyMap)
                 .returnValues(ReturnValue.ALL_OLD)
                 .build();

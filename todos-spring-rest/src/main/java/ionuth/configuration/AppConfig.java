@@ -1,4 +1,4 @@
-package ionuth.configuraiton;
+package ionuth.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,13 +41,18 @@ public class AppConfig {
 		        .build();
 	}
 	
+	@Bean
 	public TodoDynamoMapper todoDynamoMapper() {
 		return new TodoDynamoMapper();
 	}
 	
+	public String getDynamoDbTableName() {
+		return "Manual-Todos";
+	}
+	
 	@Bean
 	public TodoRepository todoRepository() {
-		return new TodoRepositoryDynamodb(dynamoDbClient(), todoDynamoMapper());
+		return new TodoRepositoryDynamodb(dynamoDbClient(), todoDynamoMapper(), getDynamoDbTableName());
 	}
 	
 	@Bean

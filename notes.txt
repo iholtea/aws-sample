@@ -375,7 +375,7 @@ use iholtea suffix where global unique names are required, like S3 buckets for e
 -	Go to the manual-todo API Gateway and create the /todos and /todos/{todoId} resources
 	check enable CORS for both
 	To create the sub-resource with path parameter /todos/{todoId} hit create a resource
-	after selecting the /todos resource - this will create it as a "childe" resource
+	after selecting the /todos resource - this will create it as a "child" resource
 	provide {todoId} as name
 	
 	Check the Lambda proxy integration
@@ -713,9 +713,160 @@ Fa programare la GTT motors pt ITP si revizie
 https://johntipper.org/setting-up-the-aws-cdk-with-java-and-gradle/
 https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/setup-project-gradle.html
 
+API Gateway and CORS :)
+https://github.com/aws-samples/aws-cdk-examples/blob/main/java/api-cors-lambda-crud-dynamodb/cdk/src/main/java/software/amazon/awscdk/examples/CorsLambdaCrudDynamodbStack.java
+
+https://stackoverflow.com/questions/62449187/deploy-multiple-api-gateway-stages-with-aws-cdk
+
+TODO
+	one difference is for the DynamoDbTable
+	the manual one has provisioned 1 Read/Write Capacity Units while the CDK one seems
+	to have 5 which is the default. Does it makes sense to modify
+	
+	for CORS - since it seems i did not do special stuff for the manual one
+	the manual thing had the default OPTIONS method for each endpoint
+	with whatever the online AWS console creates
+	
+	maybe creating an options method from CDK does the same thing ??
+	to be tried		
+	
+	So it seems in the first instance a GET request to /todos to obtain the list of
+	todos does not work and it's related to an OPTIONS request
+	
+	Probably the browser does first an OPTIONS request for the GET reqeust
+	because it's not a "simple" GET request, we are sending also the x-api-key
+	so it's using OPTIONS to ask the server if it accepts that kind of header
+	
+The OPTIONS method config for a API resource created with aws web console:
+	
+	Integration response:
+		Status code: 200
+		Content handling: passtrhough
+		default mapping: true
+		Header mappings		
+			method.response.header.Access-Control-Allow-Headers	'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'
+			method.response.header.Access-Control-Allow-Methods	'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'
+			method.response.header.Access-Control-Allow-Origin	'*'
+	Method response:
+		Response headers
+			Access-Control-Allow-Headers
+			Access-Control-Allow-Methods
+			Access-Control-Allow-Origin	
+		Response body
+			content type
+				application/json	
+				
+/////////////
+
+https://sabe.io/blog/javascript-status-code-fetch-http-response?expand_article=1
+https://4geeks.com/lesson/the-fetch-javascript-api
+
+/////////////
+
+JS async.
+
+When we have a piece of code that does asynchronous work like XMLHttpRequest
+or newer build-in fetch to get data from some external API or a setTimeout() call
+to simulate that we are waiting for some data before retrieved ->
+we CANNOT directly return that data from the function, as the runtime cannot know
+when the data will be available, all it can do is to register some piece of code
+to be run when data is available.
+
+Example : use setTimeout() to simulate an API call to get user email
+
+const users = new Map();
+users.set('gigi#aa', { email: 'gigi@yahoo.com', fullName: 'Gigi Gigescu' });
+users.set('fifi#bb', { email: 'fifi@gmail.com', fullName: 'Fifi Fifescu'});
+
+function getUserEmail( userId, pass ) {
+  setTimeout( () => {
+    return users.get( userId + '#' + pass );
+  }, 1500 );
+}
+
+console.log('Start');
+
+const user = getUserEmail( 'fifi', 'bb' );
+console.log(user);
+
+console.log('Finish');
+
+Running the code above will result in user variable being undefined
+The getUserEmail() does not and cannot return the data it retrieves.
+It can register a callback function to be run when data is available.
+For example:
+
+function getUserEmail( userId, pass, callback ) {
+  setTimeout( () => {
+    callback( users.get( userId + '#' + pass ) );
+  }, 1500 );
+}
+
+// process data when available
+getUserEmail( 'fifi', 'bb', (user) => {
+  console.log( `Retrived user: ${user.email} name: ${user.fullName}`);
+});  
 
 
-		
+Callback hell.
+
+If we need to make multiple API calls that depend on one another we will
+need to chain those callbacks for each call.
+
+So first we need to get the userEmail using userId and password
+Then after we have the userEmail we need to get related videos
+
+const videos = new Map();
+
+videos.set( 'gigi@yahoo.com',  
+  [ { videoId: 'video-01', title: 'Video 01' } ] );
+
+videos.set( 'fifi@gmail.com', [ 
+    { videoId: 'video-02', title: 'Video 02' },
+    { videoId: 'video-03', title: 'Video 03' } ] );
+    
+function getVideosByEmail( email, callback ) {
+  setTimeout( () => {
+    callback( videos.get( email ) );
+  }, 800 );
+} 
+
+And to process the data:   
+
+getUserEmail( 'fifi', 'bb', (user) => {
+  console.log( `Retrived user: ${user.email} name: ${user.fullName}`);
+  getVideosByEmail(user.email, (videos) => {
+    console.log(`Retrived first video: ${videos[0].title}`);
+  }); 
+});
+
+If for example for a video we would make another call to get video details information
+we would need to add another callback to process the video details
+
+The code can be made to look a bit nicer by extracting the inline defined callbacks
+into external functions
+
+getUserEmail('fifi', 'bb', getUserCallback);
+
+function getUserCallback(user) {
+  console.log( `Retrived user: ${user.email} name: ${user.fullName}`);
+  getVideosByEmail(user.email, getVideosCallback);
+}
+
+function getVideosCallback(videos) {
+  console.log(`Retrived first video: ${videos[0].title}`);  
+}
+
+
+///////////
+
+const xhr = new XMLHttpRequest();
+xhr.open('GET', baseUrl, true);
+xhr.send();
+
+fetch("https://jsonplaceholder.typicode.com/todos/1");
+
+						
 
 
 

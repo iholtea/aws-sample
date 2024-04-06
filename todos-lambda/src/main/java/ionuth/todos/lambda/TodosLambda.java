@@ -49,8 +49,9 @@ public class TodosLambda implements RequestHandler<APIGatewayProxyRequestEvent, 
 	}
 	
 	void initTodoServices() {
+		String dynamoTableName = System.getenv("TABLE_NAME");
 		TodoDynamoMapper dynamoMapper = new TodoDynamoMapper();
-		TodoRepository todoRepo = new TodoRepositoryDynamodb(dynamoClient, dynamoMapper);
+		TodoRepository todoRepo = new TodoRepositoryDynamodb(dynamoClient, dynamoMapper, dynamoTableName);
 		SecurityService securityService = new SecurityService();
 		todoService = new TodoService(todoRepo, securityService);
 	}
