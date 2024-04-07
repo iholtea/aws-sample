@@ -26,38 +26,43 @@
 
 <main>
 
-<div class="container-fluid" style="margin-top: 50px;">
+<div class="container-fluid" style="margin-top: 30px;">
 
   <div class="row">
 
-    <div class="col-md-4 col-sm-12">
-      <span>Main Left Content</span>
-    </div>
+    <div class="col-md-4 col-sm-12" id="all-lists-container"></div>
     
-    <div class="col-md-8 col-sm-12" id="main-container">
-      
-      <div class="row">
-        <div class="col">
-          <span>Main Right Content First line</span>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-6">Right subcontent row 1 col 1</div>  
-        <div class="col-6">Right subcontent row 1 col 2</div> 
-      </div>
-
-      <div class="row">
-        <div class="col-6">Right subcontent row 2 col 1</div>  
-        <div class="col-6">Right subcontent row 2 col 2</div> 
-      </div>
-
-      
-    </div>
+    <div class="col-md-8 col-sm-12" id="main-container"></div>
 
   </div>
 
 </div>  
+
+
+<!-- Modal to edit an item text -->
+<div class="modal" id="item-edit-modal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h4 class="modal-title">Edit item text:</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+        <input type="text" id="input-text-edit" class="form-control">
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" id="btn-text-edit" class="btn btn-primary">Save Changes</button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 </main>
 
@@ -65,6 +70,7 @@
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
     crossorigin="anonymous"></script>
 
+<script type="module" src="js/todos-main.js"></script>
 
 </body>
 </html>

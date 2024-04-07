@@ -1,0 +1,43 @@
+.item-div {
+  margin-bottom: 5px;
+}
+
+.item-text {
+  margin-left: 5px;
+}
+
+.todo-list-display {
+  margin-left: 10px;  
+}
+
+.item-line-through {
+  text-decoration-line: line-through;
+}
+
+.item-input {
+  margin-top: 10px;
+}
+
+.item-del-icon {
+  color: red;
+}
+
+.list-del-icon {
+  color: red;
+}
+
+.div-all-header {
+  margin-bottom: 10px;
+}
+
+.div-new-item {
+  margin-top: 50px;
+}
+
+.div-new-list-btn {
+  margin-top: 30px;
+}
+
+.item-edit-icon {
+  margin-right: 5px;  
+}
