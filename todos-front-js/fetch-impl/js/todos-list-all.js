@@ -230,7 +230,6 @@ async function deleteListByUuid(todoListUuid) {
   } catch(error) {
     console.log(error.message);
   }
-   
 }
 
 

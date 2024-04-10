@@ -1,4 +1,3 @@
-import todosXhr from './todos-xhr.js'
 import globalData from './global-data.js'
 import todosAll from './todos-list-all.js'
 import todosDetail from './todos-list-detail.js'
@@ -125,26 +124,36 @@ function submitNewList(event) {
 
   console.log(`Adding new TodoList: ${JSON.stringify(todoData)}`);
 
-  todosXhr.addTodoList( todoData, addListCallback );
+  addTodoList(todoData);
 
 }
 
-function addListCallback(err, data) {
-  if(!err) {
-    console.log('new list added');
-    const todo = parseAddedList(data);
+async function addTodoList(todoData) {
+  
+  const fetchOptions =  {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': globalData.apiKey
+    },
+    body: JSON.stringify(todoData)
+  };
+
+  try {
+    const response = await fetch(globalData.baseUrl, fetchOptions);
+    const receivedTodo = await response.json();
+    const todo = parseAddedList(receivedTodo);
     globalData.todos.set(todo.uuid,todo);
     globalData.currentTodoUuid = todo.uuid;
     todosAll.renderAllLists(globalData.todos);
     todosDetail.renderList(todo);
-  } else {
-    console.log('Error calling backed service');
+  } catch(error) {
+    console.log(error.message);
   }
+
 }
 
-function parseAddedList(receivedData) {
-  
-  const receivedTodo = JSON.parse(receivedData);
+function parseAddedList(receivedTodo) {
   
   const todo = {};
   todo.uuid = receivedTodo.uuid;

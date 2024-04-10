@@ -912,4 +912,11 @@ async function getResults() {
 
 getResults();
 
+////////
+
+Primagean question
+	create an async request queue
+	build like a promise factory that creates a promise, resolve it, get the 
+	result or propagate the error 
+
         

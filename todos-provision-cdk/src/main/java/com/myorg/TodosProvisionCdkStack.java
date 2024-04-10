@@ -78,7 +78,7 @@ public class TodosProvisionCdkStack extends Stack {
     			.ignorePublicAcls(false)
     			.build();
     	
-    	// calling websiteIndexDocument() aslo enables static website hosting
+    	// calling websiteIndexDocument() also enables static website hosting
     	BucketProps bucketProps = BucketProps.builder()
     			.bucketName(BUCKET_WEBSITE_NAME)
     			.blockPublicAccess(bpa)
