@@ -1,10 +1,14 @@
 package ionuth.configuration;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import ionuth.todos.repo.TodoRepository;
 import ionuth.todos.repo.impl.dynamodb.TodoRepositoryDynamodb;
 import ionuth.todos.repo.util.TodoDynamoMapper;
@@ -17,6 +21,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 public class AppConfig {
 	
 	// enable CORS API calls
+	/*
 	@Bean
 	public WebMvcConfigurer corsConfigurer() {
 		return new WebMvcConfigurer() {
@@ -28,6 +33,7 @@ public class AppConfig {
 			}
 		};
 	}
+	*/
 	
 	@Bean
 	public SecurityService securityService() {
@@ -58,5 +64,12 @@ public class AppConfig {
 	@Bean
 	public TodoService todoService() {
 		return new TodoService(todoRepository(), securityService());
+	}
+	
+	@Bean
+	public SecretKey keyJWT() {
+		// this app is used only for test on localhost
+		final String secret = "secret123secret456secret789secretABCsecretXYZ";
+		return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 	}
 }

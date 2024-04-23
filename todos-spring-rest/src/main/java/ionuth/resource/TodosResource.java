@@ -17,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ionuth.todos.model.TodoItem;
 import ionuth.todos.model.TodoList;
 import ionuth.todos.service.TodoService;
+import jakarta.servlet.ServletContext;
 
 @RestController
 public class TodosResource {
@@ -24,7 +25,7 @@ public class TodosResource {
 	private final TodoService todoService;
 	
 	// constructor injection
-	public TodosResource(TodoService todoService) {
+	public TodosResource(TodoService todoService, ServletContext servletContext) {
 		this.todoService = todoService;
 	}
 	
@@ -52,7 +53,7 @@ public class TodosResource {
 		return ResponseEntity.created(location).body(savedList);
 	}
 	
-	@CrossOrigin
+	//@CrossOrigin
 	@DeleteMapping("/todos/{listUuid}")
 	public void deleteList(@PathVariable("listUuid") String listUuid) {
 		todoService.deleteList(listUuid);
@@ -63,14 +64,14 @@ public class TodosResource {
 	 * should return if the operation succeeded or failed.
 	 * For example Using ResponseEntity and the appropriate HTTP status.
 	 */
-	@CrossOrigin
+	//@CrossOrigin
 	@DeleteMapping("todos/{listUuid}/items/{itemUuid}")
 	public void deleteItem(@PathVariable("listUuid") String listUuid,
 							@PathVariable("itemUuid") String itemUuid) {
 		todoService.deleteItem(listUuid, itemUuid);
 	}
 	
-	@CrossOrigin
+	//@CrossOrigin
 	@PutMapping("todos/{listUuid}/items/{itemUuid}")
 	public TodoItem updateItem(@PathVariable("listUuid") String listUuid,
 								@PathVariable("itemUuid") String itemUuid,
@@ -78,7 +79,7 @@ public class TodosResource {
 		return todoService.updateItem(todoItem);
 	}
 	
-	@CrossOrigin
+	//@CrossOrigin
 	@PostMapping("/todos/{listUuid}/items")
 	public TodoItem createItem(@PathVariable("listUuid") String listUuid,
 								@RequestBody TodoItem todoItem) {

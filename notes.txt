@@ -918,5 +918,10 @@ Primagean question
 	create an async request queue
 	build like a promise factory that creates a promise, resolve it, get the 
 	result or propagate the error 
+	
+////////////////////
+
+https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieving-secrets_cache-java.html
+https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieving-secrets-java-sdk.html	
 
         

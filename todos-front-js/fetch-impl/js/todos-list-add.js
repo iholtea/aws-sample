@@ -130,7 +130,7 @@ function submitNewList(event) {
 
 async function addTodoList(todoData) {
   
-  const fetchOptions =  {
+  const fetchOptions = {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

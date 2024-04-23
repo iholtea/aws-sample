@@ -8,6 +8,7 @@ public class HelloResource {
 	
 	@GetMapping("/hello")
 	public String sayHello() {
+		System.out.println("HelloResource /hello endpoint called");
 		return "hello worlds";
 	}
 	

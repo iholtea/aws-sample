@@ -1,3 +1,16 @@
+
+/* Bootstrap breakpoints 576<sm<768  768<md<992
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+);
+*/
+
+
 const apiKeyHeader = 'x-api-key';
 
 // local SpringBoot REST backend 
