@@ -1,6 +1,7 @@
 import globalData from './global-data.js'
 import todosAll from './todos-list-all.js'
 import todosDetail from './todos-list-detail.js'
+import todosRegister from './todos-register.js'
 
 
 function renderNewListForm() {
@@ -134,19 +135,26 @@ async function addTodoList(todoData) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': globalData.apiKey
+      [globalData.apiKeyHeader]: globalData.apiKey,
+      [globalData.authHeader]: globalData.authHeaderPrefix + globalData.jwt
     },
     body: JSON.stringify(todoData)
   };
 
   try {
-    const response = await fetch(globalData.baseUrl, fetchOptions);
-    const receivedTodo = await response.json();
-    const todo = parseAddedList(receivedTodo);
-    globalData.todos.set(todo.uuid,todo);
-    globalData.currentTodoUuid = todo.uuid;
-    todosAll.renderAllLists(globalData.todos);
-    todosDetail.renderList(todo);
+    const response = await fetch(globalData.todoUrl, fetchOptions);
+    if(response.ok) {
+      const receivedTodo = await response.json();
+      const todo = parseAddedList(receivedTodo);
+      globalData.todos.set(todo.uuid,todo);
+      globalData.currentTodoUuid = todo.uuid;
+      todosAll.renderAllLists(globalData.todos);
+      todosDetail.renderList(todo);
+    } else if(response.status === 401) {
+      console.log('addTodoList: request not authorized');
+      todosRegister.displayLogin();  
+    }
+
   } catch(error) {
     console.log(error.message);
   }

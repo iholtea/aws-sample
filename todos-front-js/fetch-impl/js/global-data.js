@@ -10,31 +10,51 @@ $grid-breakpoints: (
 );
 */
 
-
-const apiKeyHeader = 'x-api-key';
-
 // local SpringBoot REST backend 
-const baseUrl = 'http://localhost:8080/todos';
+const baseUrl = 'http://localhost:8080';
 const apiKey = 'dummyKey';
 
 // manual created API Gateway in AWS web console
-//const apiKey = 'AGdASLxD8t3chg1F6uCe251G2vFWrdQt6ZgUnP8K';
 //const baseUrl = 'https://95k6wo08hg.execute-api.us-east-1.amazonaws.com/test/todos'
+//const apiKey = 'AGdASLxD8t3chg1F6uCe251G2vFWrdQt6ZgUnP8K';
 
 // AWS CDK created API Gateway
-//const apiKey = 'RZluarPnz29wgpnsdJ4kya74bJbI1DaDanjWKVa6';
 //const baseUrl = 'https://nrjp1jpvc8.execute-api.us-east-1.amazonaws.com/test/todos'
+//const apiKey = 'RZluarPnz29wgpnsdJ4kya74bJbI1DaDanjWKVa6';
 
-const todos = new Map();
+const todoUrl = baseUrl + '/todos';
+const loginUrl = baseUrl + '/login';
+const registerUrl = baseUrl + '/register'
 
+const apiKeyHeader = 'x-api-key';
+
+const authHeader = 'authorization';
+const authHeaderPrefix = 'Bearer ';
+
+let jwt = '';
+
+let todos = new Map();
 let currentTodoUuid = null;
 let currentItemUuid = null;
+
+function clearCachedData() {
+  todos = new Map();
+  currentTodoUuid = null;
+  currentItemUuid = null; 
+}
 
 export default {
   apiKeyHeader,
   baseUrl,
+  todoUrl,
+  loginUrl,
+  registerUrl,
   apiKey,
   todos,
   currentTodoUuid,
-  currentItemUuid
+  currentItemUuid,
+  jwt,
+  authHeader,
+  authHeaderPrefix,
+  clearCachedData
 }

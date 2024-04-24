@@ -1,4 +1,5 @@
 import globalData from './global-data.js'
+import todosRegister from './todos-register.js'
 
 const itemEditModal = new bootstrap.Modal(document.getElementById('item-edit-modal'));
 
@@ -15,18 +16,24 @@ function fetchList(listUuid) {
 }
 
 async function fetchListByUuid(listUuid) {
-  const todoListUrl = `${globalData.baseUrl}/${listUuid}`;
+  const todoListUrl = `${globalData.todoUrl}/${listUuid}`;
   const fetchOptions =  {
     method: 'GET',
     headers: {
-      'x-api-key': globalData.apiKey
+      [globalData.apiKeyHeader]: globalData.apiKey,
+      [globalData.authHeader]: globalData.authHeaderPrefix + globalData.jwt
     }  
   };
   try {
     const response = await fetch(todoListUrl, fetchOptions);
-    const receivedTodo = await response.json();
-    parseItemsByList(receivedTodo);
-    renderList( globalData.todos.get(globalData.currentTodoUuid) );
+    if(response.ok) {
+      const receivedTodo = await response.json();
+      parseItemsByList(receivedTodo);
+      renderList( globalData.todos.get(globalData.currentTodoUuid) );
+    } else if(response.status === 401) {
+      console.log('fetchListByUuid: request not authorized');
+      todosRegister.displayLogin();  
+    }
   } catch(error) {
     console.log(error.message);
   }
@@ -122,7 +129,7 @@ function renderItemActionCol(item) {
   actionCol.classList.add('col-sm-1');
   
   const editIcon = document.createElement('a');
-  editIcon.href = '#';
+  editIcon.href = '';
   editIcon.classList.add('fa-regular');
   editIcon.classList.add('fa-edit');
   editIcon.classList.add('item-edit-icon');
@@ -130,7 +137,7 @@ function renderItemActionCol(item) {
   actionCol.append(editIcon);
 
   const delIcon = document.createElement('a');
-  delIcon.href = '#';
+  delIcon.href = '';
   delIcon.classList.add('fa-regular');
   delIcon.classList.add('fa-trash-can');
   delIcon.classList.add('item-del-icon');
@@ -172,12 +179,13 @@ function processCheckItemEvent(event) {
 
 async function checkItem(itemData) {
   
-  const itemUrl = `${globalData.baseUrl}/${itemData.listUuid}/items/${itemData.uuid}`;
+  const itemUrl = `${globalData.todoUrl}/${itemData.listUuid}/items/${itemData.uuid}`;
   const fetchOptions =  {
     method: 'PUT',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': globalData.apiKey
+      [globalData.apiKeyHeader]: globalData.apiKey,
+      [globalData.authHeader]: globalData.authHeaderPrefix + globalData.jwt
     },
     body: JSON.stringify(itemData)
   };
@@ -185,25 +193,31 @@ async function checkItem(itemData) {
   try {
     
     const response =  await fetch(itemUrl, fetchOptions);
-    const receivedItem = await response.json();
+    if(response.ok) {
+      const receivedItem = await response.json();
 
-    const itemCheckbox = document.getElementById(`check:${receivedItem.uuid}`);
-    const itemLabel = document.getElementById(`label:${receivedItem.uuid}`);
+      const itemCheckbox = document.getElementById(`check:${receivedItem.uuid}`);
+      const itemLabel = document.getElementById(`label:${receivedItem.uuid}`);
+      
+      // update item in the global data cache
+      const cachedTodo = globalData.todos.get(globalData.currentTodoUuid)
+              .items.get(receivedItem.uuid);
+      cachedTodo.text = receivedItem.text;
+      cachedTodo.done = receivedItem.done;
+
+      // update the UI
+      if( receivedItem.done === true ) {
+        itemCheckbox.setAttribute('checked', 'true');
+        itemLabel.classList.add('item-line-through');   
+      } else {
+        itemCheckbox.setAttribute('checked', 'false');
+        itemLabel.classList.remove('item-line-through');   
+      }
     
-    // update item in the global data cache
-    const cachedTodo = globalData.todos.get(globalData.currentTodoUuid)
-            .items.get(receivedItem.uuid);
-    cachedTodo.text = receivedItem.text;
-    cachedTodo.done = receivedItem.done;
-
-    // update the UI
-    if( receivedItem.done === true ) {
-      itemCheckbox.setAttribute('checked', 'true');
-      itemLabel.classList.add('item-line-through');   
-    } else {
-      itemCheckbox.setAttribute('checked', 'false');
-      itemLabel.classList.remove('item-line-through');   
-    }
+    } else if(response.status === 401) {
+      console.log('checkItem: request not authorized');
+      todosRegister.displayLogin();
+    } 
 
   } catch(error) {
     console.log(error.message);
@@ -233,7 +247,7 @@ function processEditItemEvent(event) {
   const labelEl = document.getElementById(`label:${itemUuid}`);
   const inputTextEdit = document.getElementById('input-text-edit');
   inputTextEdit.value = labelEl.innerHTML;
-  
+  event.preventDefault();
   itemEditModal.show();
 }
 
@@ -264,28 +278,36 @@ function editItemText(event) {
 
 async function updateItem(itemData) {
   
-  const itemUrl = `${globalData.baseUrl}/${itemData.listUuid}/items/${itemData.uuid}`;
+  const itemUrl = `${globalData.todoUrl}/${itemData.listUuid}/items/${itemData.uuid}`;
   const fetchOptions =  {
     method: 'PUT',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': globalData.apiKey
+      [globalData.apiKeyHeader]: globalData.apiKey,
+      [globalData.authHeader]: globalData.authHeaderPrefix + globalData.jwt
     },
     body: JSON.stringify(itemData)
   };
   
   try {
     const response = await fetch(itemUrl, fetchOptions);
-    const receivedItem = await response.json();
-
-    const itemLabel = document.getElementById(`label:${receivedItem.uuid}`);
-
-    // update item in the global data cache
-    const cachedTodo = globalData.todos.get(globalData.currentTodoUuid)
-            .items.get(receivedItem.uuid);
-    cachedTodo.text = receivedItem.text;
+    if(response.ok) {
     
-    itemLabel.innerHTML = receivedItem.text;
+      const receivedItem = await response.json();
+
+      const itemLabel = document.getElementById(`label:${receivedItem.uuid}`);
+
+      // update item in the global data cache
+      const cachedTodo = globalData.todos.get(globalData.currentTodoUuid)
+              .items.get(receivedItem.uuid);
+      cachedTodo.text = receivedItem.text;
+      
+      itemLabel.innerHTML = receivedItem.text;
+    
+    } else if(response.status === 401) {
+      console.log('updateItem: request not authorized');
+      todosRegister.displayLogin();
+    }
 
   } catch(error) {
     console.log(error.message);
@@ -304,7 +326,8 @@ function bindItemDeleteActions() {
 }
 
 function processDeleteItemEvent(event) {
-  if( confirm('Are you sure you want to delete this TODO list') ) {
+  event.preventDefault();
+  if( confirm('Are you sure you want to delete this TODO item') ) {
     let targetElem = event.target;
     while( !(targetElem.nodeName.toUpperCase() === 'A') ) {
       targetElem = targetElem.parentElement;
@@ -316,11 +339,12 @@ function processDeleteItemEvent(event) {
 }
 
 async function deleteItem(listUuid, itemUuid) {
-  const itemUrl = `${globalData.baseUrl}/${listUuid}/items/${itemUuid}`;
+  const itemUrl = `${globalData.todoUrl}/${listUuid}/items/${itemUuid}`;
   const fetchOptions =  {
     method: 'DELETE',
     headers: {
-      'x-api-key': globalData.apiKey
+      [globalData.apiKeyHeader]: globalData.apiKey,
+      [globalData.authHeader]: globalData.authHeaderPrefix + globalData.jwt
     }
   }
   try {
@@ -328,6 +352,9 @@ async function deleteItem(listUuid, itemUuid) {
     if(response.ok) {
       deleteItemFromCache( globalData.currentTodoUuid, globalData.currentItemUuid );
       renderList( globalData.todos.get(globalData.currentTodoUuid) );  
+    } else if(response.status === 401) {
+      console.log('deleteItem: request not authorized');
+      todosRegister.displayLogin();
     }
   } catch(error) {
     console.log(error.message);
@@ -396,12 +423,13 @@ function addNewItem() {
 
 async function addItemApiCall(itemData) {
   
-  const itemUrl = `${globalData.baseUrl}/${itemData.listUuid}/items`;
+  const itemUrl = `${globalData.todoUrl}/${itemData.listUuid}/items`;
   const fetchOptions =  {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': globalData.apiKey
+      [globalData.apiKeyHeader]: globalData.apiKey,
+      [globalData.authHeader]: globalData.authHeaderPrefix + globalData.jwt,
     },
     body: JSON.stringify(itemData)
   };
@@ -409,20 +437,23 @@ async function addItemApiCall(itemData) {
   try {
     
     const response = await fetch(itemUrl, fetchOptions);
-    const receivedItem = await response.json();
-
-    // add item to the current Todo list in the global cache
-    const currentTodoList = globalData.todos.get(globalData.currentTodoUuid);
-    const todoItem = {};
-    todoItem.uuid = receivedItem.uuid;
-    todoItem.listUuid = receivedItem.listUuid;
-    todoItem.text = receivedItem.text;
-    todoItem.done = receivedItem.done;
-    todoItem.orderIdx = receivedItem.orderIdx;
-    todoItem.extraInfo = receivedItem.extraInfo;
-    currentTodoList.items.set( todoItem.uuid, todoItem );
-    
-    renderList(currentTodoList);
+    if(response.ok) {
+      const receivedItem = await response.json();
+      // add item to the current Todo list in the global cache
+      const currentTodoList = globalData.todos.get(globalData.currentTodoUuid);
+      const todoItem = {};
+      todoItem.uuid = receivedItem.uuid;
+      todoItem.listUuid = receivedItem.listUuid;
+      todoItem.text = receivedItem.text;
+      todoItem.done = receivedItem.done;
+      todoItem.orderIdx = receivedItem.orderIdx;
+      todoItem.extraInfo = receivedItem.extraInfo;
+      currentTodoList.items.set( todoItem.uuid, todoItem );
+      renderList(currentTodoList);
+    } else if(response.status === 401) {
+      console.log('addItemApiCall: request not authorized');
+      todosRegister.displayLogin();
+    }
 
   } catch(error) {
     console.log(error.message);

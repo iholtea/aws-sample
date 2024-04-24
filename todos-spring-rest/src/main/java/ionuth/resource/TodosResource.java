@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -30,20 +31,23 @@ public class TodosResource {
 	}
 	
 	@GetMapping("/todos")
-	public List<TodoList> getAllListsByUser() {
-		return todoService.getAllListsByUser();
+	public List<TodoList> getAllListsByUser(@RequestAttribute("loginEmail") String loginEmail) {
+		return todoService.getAllListsByUser(loginEmail);
 	}
 	
 	@GetMapping("/todos/{uuid}")
 	//TODO since we already have the TodoList details in the UI we could 
 	//just request for all items of this list and use the cached infro
 	//from the client to display TodoList title in the details view
-	public TodoList getListById(@PathVariable("uuid") String uuid) {
-		return todoService.getListById(uuid);
+	public TodoList getListById(@PathVariable("uuid") String uuid,
+			@RequestAttribute("loginEmail") String loginEmail) {
+		return todoService.getListById(uuid, loginEmail);
 	}
 	
 	@PostMapping("/todos")
-	public ResponseEntity<TodoList> addTodoList(@RequestBody TodoList todoList) {
+	public ResponseEntity<TodoList> addTodoList(@RequestBody TodoList todoList,
+			@RequestAttribute("loginEmail") String loginEmail) {
+		todoList.setUserEmail(loginEmail);
 		TodoList savedList = todoService.addTodoList(todoList);
 		// add /todos/{listUuid} as location header
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -55,8 +59,9 @@ public class TodosResource {
 	
 	//@CrossOrigin
 	@DeleteMapping("/todos/{listUuid}")
-	public void deleteList(@PathVariable("listUuid") String listUuid) {
-		todoService.deleteList(listUuid);
+	public void deleteList(@PathVariable("listUuid") String listUuid,
+			@RequestAttribute("loginEmail") String loginEmail) {
+		todoService.deleteList(listUuid,loginEmail);
 	}
 	
 	

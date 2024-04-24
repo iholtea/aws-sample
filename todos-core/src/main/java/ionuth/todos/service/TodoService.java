@@ -17,22 +17,21 @@ public class TodoService {
 	private static final String REFERENCE_DATE = "2024-01-01 00:00:00";
 	
 	private final TodoRepository todoRepo;
-	private final SecurityService securityService;
+	
 	
 	// constructor dependency injection
-	public TodoService(TodoRepository todoRepo, SecurityService securityService) {
+	public TodoService(TodoRepository todoRepo) {
 		this.todoRepo = todoRepo;
-		this.securityService = securityService;
 	}
 	
-	public List<TodoList> getAllListsByUser() {
-		List<TodoList> todos = todoRepo.getListsByUserEmail(securityService.getUserEmail(), REFERENCE_DATE);
+	public List<TodoList> getAllListsByUser(String userEmail) {
+		List<TodoList> todos = todoRepo.getListsByUserEmail(userEmail, REFERENCE_DATE);
 		Collections.sort(todos, Comparator.comparing(TodoList::getCreationDate).reversed());
 		return todos;
 	}
 	
-	public TodoList getListById(String listUuid) {
-		TodoList todoList = todoRepo.getListById(listUuid, securityService.getUserEmail());
+	public TodoList getListById(String listUuid, String userEmail) {
+		TodoList todoList = todoRepo.getListById(listUuid, userEmail);
 		Collections.sort(todoList.getItems(), Comparator.comparing(TodoItem::getOrderIdx));
 		return todoList;
 	}
@@ -41,8 +40,8 @@ public class TodoService {
 		return todoRepo.createList( mapTodoListForAdd(todoList) );
 	}
 	
-	public void deleteList(String listUuid) {
-		todoRepo.deleteList(listUuid, securityService.getUserEmail());
+	public void deleteList(String listUuid, String userEmail) {
+		todoRepo.deleteList(listUuid, userEmail);
 	}
 	
 	public void deleteItem(String listUuid, String itemUuid) {
@@ -71,16 +70,12 @@ public class TodoService {
 		todoList.setCreationDate(dateStr);
 		todoList.setLastViewDate(dateStr);
 		
-		todoList.setUserEmail(securityService.getUserEmail());
-		
 		var items = todoList.getItems();
 		for(int i=0; i<items.size(); i++ ) {
 			items.get(i).setListUuid(listUUID);
 			items.get(i).setUuid(UUID.randomUUID().toString());
 			items.get(i).setOrderIdx(i+1);
 		}
-		
-		System.out.println("TodoService: adding TodoList: " + todoList);
 		
 		return todoList;
 	}

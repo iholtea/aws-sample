@@ -18,15 +18,16 @@ import ionuth.todos.repo.TodoRepository;
 
 public class TodoServiceUnitTest {
 	
-	SecurityService securityService;
+	String userEmail = "test@test.com";
+	
 	TodoRepository todoRepo;
 	TodoService underTest;
+	 
 	
 	@BeforeEach
 	public void init() {
-		securityService = mock(SecurityService.class);
 		todoRepo = mock(TodoRepository.class);
-		underTest = new TodoService(todoRepo, securityService);
+		underTest = new TodoService(todoRepo);
 	}
 	
 	@Test
@@ -44,12 +45,10 @@ public class TodoServiceUnitTest {
 		list3.setUuid("test-uuid-3");
 		list3.setCreationDate("2024-02-02 11:11:11");
 		
-		when( securityService.getUserEmail() ).thenReturn("test@test.com");
-		
 		when( todoRepo.getListsByUserEmail(anyString(), anyString()) )
 				.thenReturn( Arrays.asList(list1, list2, list3) );
 		
-		List<TodoList> testTodos = underTest.getAllListsByUser();
+		List<TodoList> testTodos = underTest.getAllListsByUser(userEmail);
 		
 		assertNotNull(testTodos);
 		assertEquals(3, testTodos.size());
@@ -84,11 +83,10 @@ public class TodoServiceUnitTest {
 		item.setOrderIdx(2);
 		todo.getItems().add(item);
 		
-		when( securityService.getUserEmail() ).thenReturn("test@test.com");
 		
 		when( todoRepo.getListById( anyString(), anyString()) ).thenReturn(todo);
 		
-		TodoList testTodo = underTest.getListById("list-uuid");
+		TodoList testTodo = underTest.getListById("list-uuid", userEmail);
 		
 		assertEquals(3, testTodo.getItems().size());
 		assertEquals("item-002", testTodo.getItems().get(0).getUuid());

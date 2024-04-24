@@ -27,7 +27,7 @@ public class AuthResource {
 	public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
 		
 		System.out.println("Login endpoint: received: " + loginRequest);
-		if( "test@test.com".equals(loginRequest.email) && "test".equals(loginRequest.password) ) {
+		if( "holteai@yahoo.com".equals(loginRequest.email) && "test".equals(loginRequest.password) ) {
 			String jwt = createJWT(loginRequest);
 			return ResponseEntity.ok(new LoginResponse("login successful",jwt));
 		} else {

@@ -1,7 +1,7 @@
 import globalData from './global-data.js'
 import todosDetail from './todos-list-detail.js'
 import todosAdd from './todos-list-add.js'
-
+import todosRegister from './todos-register.js'
 
 
 async function fetchAllLists() {
@@ -9,14 +9,21 @@ async function fetchAllLists() {
   const fetchOptions =  {
     method: 'GET',
     headers: {
-      'x-api-key': globalData.apiKey
+      [globalData.apiKeyHeader]: globalData.apiKey,
+      [globalData.authHeader]: globalData.authHeaderPrefix + globalData.jwt
     }  
   };
   try {  
-    const response = await fetch(globalData.baseUrl, fetchOptions);
-    const receivedTodos = await response.json();
-    parseAllLists(receivedTodos)
-    renderAllLists(globalData.todos);
+    const response = await fetch(globalData.todoUrl, fetchOptions);
+    if(response.ok) {
+      const receivedTodos = await response.json();
+      parseAllLists(receivedTodos)
+      renderAllLists(globalData.todos);
+    } else if(response.status === 401) {
+      console.log('fetchAllLists: request not authorized');
+      todosRegister.displayLogin();
+    }
+
   } catch(error) {
     displayAllListsErr(error.message);
   }
@@ -72,7 +79,7 @@ function renderAllLists(todos) {
 
     const linkEl = document.createElement('a');
     linkEl.id = `list:disp:${todoList.uuid}`;
-    linkEl.href = '#';
+    linkEl.href = '';
     linkEl.classList.add('todo-list-display');
     linkEl.innerHTML = `${todoList.title}`;
     textColDiv.appendChild(linkEl);
@@ -83,7 +90,7 @@ function renderAllLists(todos) {
     delColDiv.classList.add('col');
 
     const delIcon = document.createElement('a');
-    delIcon.href = '#';
+    delIcon.href = '';
     delIcon.classList.add('fa-regular');
     delIcon.classList.add('fa-trash-can');
     delIcon.classList.add('list-del-icon');
@@ -182,6 +189,7 @@ function processRenderListEvent(event) {
   // set current TodoList to the selected one
   globalData.currentTodoUuid = todoListUuid;
   
+  event.preventDefault();
   todosDetail.fetchList(todoListUuid);
   
 }
@@ -203,6 +211,7 @@ function processDeleteListEvent(event) {
   }
   const todoListUuid = targetElem.id.split(':')[2];
   const todoTitle = globalData.todos.get(todoListUuid).title;
+  event.preventDefault();
   if( confirm(`Are you sure you want to delete TODO: ${todoTitle}`) ) {
     globalData.currentTodoUuid = todoListUuid;
     deleteListByUuid(todoListUuid)
@@ -210,11 +219,12 @@ function processDeleteListEvent(event) {
 }
 
 async function deleteListByUuid(todoListUuid) {
-  const todoListUrl = `${globalData.baseUrl}/${todoListUuid}`; 
+  const todoListUrl = `${globalData.todoUrl}/${todoListUuid}`; 
   const fetchOptions =  {
     method: 'DELETE',
     headers: {
-      'x-api-key': globalData.apiKey
+      [globalData.apiKeyHeader]: globalData.apiKey,
+      [globalData.authHeader]: globalData.authHeaderPrefix + globalData.jwt
     }  
   };
   try {
@@ -224,8 +234,8 @@ async function deleteListByUuid(todoListUuid) {
       globalData.currentTodoUuid = null;
       renderAllLists(globalData.todos);
       todosDetail.resetRenderList();
-    } else {
-      console.log('Error calling backed service');   
+    } else if(response.status === 401) {
+      console.log('deleteListByUuid: request not authorized');   
     }
   } catch(error) {
     console.log(error.message);

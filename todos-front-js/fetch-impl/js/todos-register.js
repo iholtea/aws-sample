@@ -1,3 +1,6 @@
+import globalData from './global-data.js'
+import todosAll from './todos-list-all.js'
+import todosDetail from './todos-list-detail.js'
 
 const loginHtml = `
   <form id="login-form">
@@ -103,13 +106,16 @@ function displayLogin(event) {
     event.preventDefault();  
   }
 
+  document.getElementById('main-container').innerHTML = '';
   document.getElementById('all-lists-container').innerHTML = loginHtml;
   
   document.getElementById('register-link')
       .addEventListener('click', displayCreateNew);
 
   document.getElementById('login-btn')
-      .addEventListener('click', signIn)    
+      .addEventListener('click', signIn);
+      
+  globalData.clearCachedData();    
   
 }
 
@@ -119,6 +125,7 @@ function displayCreateNew(event) {
     event.preventDefault();
   }
 
+  document.getElementById('main-container').innerHTML = '';
   document.getElementById('all-lists-container').innerHTML = registerHtml;
   
   document.getElementById('login-link')
@@ -146,10 +153,14 @@ async function signIn(event) {
   };
 
   try {
-    const response = await fetch('http://localhost:8080/login', fetchOptions);
+    const response = await fetch(globalData.loginUrl, fetchOptions);
     const loginResponse = await response.json();
     if(response.ok) {
-      console.log(loginResponse.jwt);
+      console.log(`Login successful for user ${loginRequest.email}`);
+      globalData.jwt = loginResponse.jwt;
+      // wait for fetch all before re-set the detail div
+      await todosAll.fetchAllLists();
+      todosDetail.resetRenderList();
     } else if( response.status === 401 ) {
       console.log(loginResponse.message);
     }
@@ -164,4 +175,8 @@ function registerUser(event) {
   event.preventDefault();
 }
 
-displayLogin();
+export default {
+  displayLogin,
+  displayCreateNew,
+}
+

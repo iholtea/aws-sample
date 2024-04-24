@@ -22,7 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 @Order(2)
-public class AuthenticationFilter implements Filter {
+public class AuthorisationFilter implements Filter {
 	
 	@Autowired
 	private SecretKey jwtKey;
@@ -37,9 +37,10 @@ public class AuthenticationFilter implements Filter {
 		
 		if(!allow(httpReq)) {
 			
-			String authHeader = httpReq.getHeader("authorization");
+			String authHeader = httpReq.getHeader("Authorization");
 			
 			if( authHeader == null || !authHeader.startsWith("Bearer ") ) {
+				System.out.println("AuthorizationFilter: no Authorization header received");
 				httpResp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 				httpResp.getWriter().write("body: user not authenticated");
 				return;

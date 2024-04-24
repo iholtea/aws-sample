@@ -16,7 +16,6 @@ import ionuth.todos.model.TodoList;
 import ionuth.todos.repo.TodoRepository;
 import ionuth.todos.repo.impl.dynamodb.TodoRepositoryDynamodb;
 import ionuth.todos.repo.util.TodoDynamoMapper;
-import ionuth.todos.service.SecurityService;
 import ionuth.todos.service.TodoService;
 import software.amazon.awssdk.http.HttpStatusCode;
 import software.amazon.awssdk.regions.Region;
@@ -35,6 +34,7 @@ public class TodosLambda implements RequestHandler<APIGatewayProxyRequestEvent, 
 	
 	private TodoService todoService;
 	private LambdaLogger logger;
+	private String userEmail;
 	
 	void initAws(Context context) {
 		
@@ -52,8 +52,8 @@ public class TodosLambda implements RequestHandler<APIGatewayProxyRequestEvent, 
 		String dynamoTableName = System.getenv("TABLE_NAME");
 		TodoDynamoMapper dynamoMapper = new TodoDynamoMapper();
 		TodoRepository todoRepo = new TodoRepositoryDynamodb(dynamoClient, dynamoMapper, dynamoTableName);
-		SecurityService securityService = new SecurityService();
-		todoService = new TodoService(todoRepo, securityService);
+		userEmail = getUserEmailFromWhatLabmdaAuthorizerProvides();
+		todoService = new TodoService(todoRepo);
 	}
 	
 	APIGatewayProxyResponseEvent initResponse() {
@@ -115,7 +115,7 @@ public class TodosLambda implements RequestHandler<APIGatewayProxyRequestEvent, 
 	
 	APIGatewayProxyResponseEvent getAllListsByUser(APIGatewayProxyResponseEvent response) {
 		
-		var todoLists = todoService.getAllListsByUser();
+		var todoLists = todoService.getAllListsByUser(userEmail);
 		response.setStatusCode(HttpStatusCode.OK);
 		response.setBody( toJson(todoLists) );
 		return response;
@@ -126,7 +126,7 @@ public class TodosLambda implements RequestHandler<APIGatewayProxyRequestEvent, 
 			APIGatewayProxyRequestEvent request) {
 		
 		String listUuid = request.getPathParameters().get("todoId");
-		var todoList = todoService.getListById(listUuid);
+		var todoList = todoService.getListById(listUuid, userEmail);
 		response.setStatusCode(HttpStatusCode.OK);
 		response.setBody( toJson(todoList) );
 		return response;
@@ -137,7 +137,7 @@ public class TodosLambda implements RequestHandler<APIGatewayProxyRequestEvent, 
 			APIGatewayProxyRequestEvent request) {
 		
 		String listUuid = request.getPathParameters().get("todoId");
-		todoService.deleteList(listUuid);
+		todoService.deleteList(listUuid, userEmail);
 		response.setStatusCode(HttpStatusCode.OK);
 		return response;
 	
